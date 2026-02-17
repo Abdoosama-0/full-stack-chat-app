@@ -39,6 +39,10 @@ const Login = () => {
 
       // لو عندك توكن احفظه
        localStorage.setItem("token", data.token);
+       localStorage.setItem("username", data.username);
+       localStorage.setItem("id", data.id);
+       localStorage.setItem("email", data.email);
+
       //================logedin 
 
 

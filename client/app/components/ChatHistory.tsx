@@ -3,12 +3,17 @@
 
 import React, { useEffect, useState } from "react";
 import Search from "./Search";
+import { useChatStore } from "../store/chatStore";
 
 const ChatHistory = () => {
+
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [chatHistory, setChatHistory] = useState<any[]>([]);
-  const [selectedChatId, setSelectedChatId] = useState<number | null>(null);
+ 
+ const setSelectedChatId = useChatStore(
+    (state) => state.setSelectedChatId
+  );
   useEffect(() => {
     const fetchChats = async () => {
       try {
@@ -53,13 +58,14 @@ const ChatHistory = () => {
       // لو مفيش شاتس، نعرض search bar
       <div>
         <p>No chats yet. Search for people to contact:</p>
-        <Search />
+        
       </div>
     ) : (
       <>
-       <Search />
+      
   
       <ul>
+        <h1 className="border-t-4 border-black  ">your chats</h1>
         {chatHistory.map((chat) => (
           <li onClick={()=>setSelectedChatId(chat.id)} className="border-2 rounded-2xl p-2 cursor-pointer bg-slate-800 hover:bg-slate-700 text-white w-fit" key={chat.id}>
             Members: {chat.members.map((m: any) => m.username).join(", ")}

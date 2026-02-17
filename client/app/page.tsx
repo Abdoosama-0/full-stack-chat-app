@@ -16,7 +16,7 @@ const [token, setToken] = useState<string | null>(null);
 if (token) {
   return (
     <>
-    <h1>{token}</h1>
+   
     
     <UserPage />
     </>
