@@ -30,7 +30,7 @@ const ChatHistory = () => {
         if (!res.ok) {
           setMessage(data.message || "Failed to fetch chat history");
         } else {
-            alert(JSON.stringify(data.chats));
+           
           setChatHistory(data.chats || []);
         }
       } catch (err) {
