@@ -5,6 +5,7 @@ import Search from "./Search";
 import { useChatStore } from "../store/chatStore";
 import { useSelectedUserStore } from "../store/selectedUser";
 import{useUserData} from "../store/userData"
+import { HiOutlineChatBubbleLeftRight, HiOutlineHashtag, HiOutlineUserCircle } from "react-icons/hi2";
 
 const PreviousChats = () => {
   const [loading, setLoading] = useState(true);
@@ -57,20 +58,32 @@ const PreviousChats = () => {
     fetchChats();
   }, []);
 
-  if (loading) return <div>Loading chats...</div>;
+  if (loading) return (
+    <div className="flex items-center gap-2 rounded-xl border border-dashed border-border/80 bg-muted/40 px-4 py-6 text-sm text-muted-foreground">
+      <HiOutlineChatBubbleLeftRight className="size-5 shrink-0 text-primary" aria-hidden />
+      Loading chats...
+    </div>
+  );
 
   return (
-    <div>
-      {message && <p>{message}</p>}
+    <div className="space-y-4">
+      {message && (
+        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {message}
+        </p>
+      )}
 
       {chatHistory.length === 0 ? (
-        <div>
-          <p>No chats yet. Search for people to contact:</p>
+        <div className="rounded-xl border border-border/60 bg-muted/30 p-4 text-center text-sm text-muted-foreground">
+          <p className="mb-3 font-medium text-foreground">No chats yet. Search for people to contact:</p>
           <Search />
         </div>
       ) : (
         <>
-          <h1 className="border-t-4 border-black">Your Chats</h1>
+          <h2 className="flex items-center gap-2 border-t border-border/80 pt-4 text-base font-semibold tracking-tight text-foreground">
+            <HiOutlineChatBubbleLeftRight className="size-5 text-primary" aria-hidden />
+            Your Chats
+          </h2>
 
           <ul className="space-y-3">
             {chatHistory.map((chat) => {
@@ -96,19 +109,28 @@ const PreviousChats = () => {
                       setSelectedUserAvatar(chat.otherUser?.avatar || null);
                     } 
                   }}
-                  className="border-2 rounded-2xl p-3 cursor-pointer bg-slate-800 hover:bg-slate-700 text-white w-full"
+                  className="w-full cursor-pointer rounded-2xl border border-border/80 bg-card p-4 text-left shadow-sm transition hover:border-primary/35 hover:bg-accent/30 hover:shadow-md"
                 >
-                  <p>
-                    <strong>Name:</strong> {displayName || "Unknown"}
+                  <p className="flex items-center gap-2 text-sm font-medium text-foreground">
+                    <HiOutlineUserCircle className="size-4 shrink-0 text-primary" aria-hidden />
+                    <span>
+                      <strong>Name:</strong> {displayName || "Unknown"}
+                    </span>
                   </p>
 
-                  <p>
-                    <strong>Last Message:</strong>{" "}
-                    {chat.messages?.[0]?.content || "No messages yet"}
+                  <p className="mt-2 flex items-start gap-2 text-sm text-muted-foreground">
+                    <HiOutlineChatBubbleLeftRight className="mt-0.5 size-4 shrink-0 text-muted-foreground/80" aria-hidden />
+                    <span>
+                      <strong className="text-foreground/90">Last Message:</strong>{" "}
+                      {chat.messages?.[0]?.content || "No messages yet"}
+                    </span>
                   </p>
 
-                  <p>
-                    <strong>Chat ID:</strong> {chat.id}
+                  <p className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                    <HiOutlineHashtag className="size-3.5 shrink-0" aria-hidden />
+                    <span>
+                      <strong className="text-foreground/80">Chat ID:</strong> {chat.id}
+                    </span>
                   </p>
                 </li>
               );

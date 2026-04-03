@@ -5,6 +5,7 @@ import Chat from "./Messages";
 import { useChatStore } from "../store/chatStore";
 import { useSelectedUserStore } from "../store/selectedUser";
 import{useUserData} from "../store/userData"
+import { HiOutlineMagnifyingGlass, HiOutlineUser } from "react-icons/hi2";
 
 
 const Search = () => {
@@ -117,24 +118,40 @@ const Search = () => {
       fetchChatData(user);
     }
   return (
-    <div className="max-w-sm">
-      <input
-        type="text"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search people..."
-        className="border p-2 rounded w-full"
-      />
+    <div className="w-full max-w-md space-y-3">
+      <div className="relative">
+        <HiOutlineMagnifyingGlass
+          className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
+          aria-hidden
+        />
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search people..."
+          className="h-11 w-full rounded-xl border border-input bg-background pl-10 pr-3 text-sm shadow-sm outline-none ring-primary/20 transition placeholder:text-muted-foreground focus:border-primary/50 focus:ring-4"
+        />
+      </div>
 
-      {loading && <p>Searching...</p>}
-      {message && <p>{message}</p>}
+      {loading && (
+        <p className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span className="inline-block size-3.5 animate-pulse rounded-full bg-primary/60" aria-hidden />
+          Searching...
+        </p>
+      )}
+      {message && (
+        <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-900 dark:text-amber-100">
+          {message}
+        </p>
+      )}
 
-      <ul className="mt-2">
+      <ul className="mt-1 max-h-64 space-y-1 overflow-y-auto rounded-xl border border-border/60 bg-muted/20 p-1">
         {users.map((user) => (
           <li onClick={() => handleUserClick(user)}
             key={user.id}
-            className="p-2 border-b cursor-pointer hover:bg-gray-100"
+            className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition hover:bg-primary/10 hover:text-primary"
           >
+            <HiOutlineUser className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             {user.username}
           </li>
         ))}

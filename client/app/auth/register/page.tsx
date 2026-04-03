@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 
 import React, { useState } from "react";
+import { HiOutlineEnvelope, HiOutlineLockClosed, HiOutlineUser } from "react-icons/hi2";
 
 const Register = () => {
     const router = useRouter(); // ✅ App Router
@@ -48,60 +49,70 @@ router.push(`/auth/verify-otp/${encodeURIComponent(email)}`);
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-100">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-primary/5 to-violet-200/25 px-4 py-12">
       <form
         onSubmit={handleRegister}
-        className="w-full max-w-md space-y-4 rounded-xl bg-white p-6 shadow"
+        className="w-full max-w-md space-y-5 rounded-2xl border border-border/70 bg-card/95 p-8 shadow-xl shadow-primary/10 backdrop-blur-sm"
       >
-        <h1 className="text-2xl font-bold text-center">Create Account</h1>
+        <h1 className="text-center text-2xl font-semibold tracking-tight text-foreground">
+          Create Account
+        </h1>
 
-        {/* Username */}
-        <input
-          type="text"
-          placeholder="Username"
-          className="w-full rounded border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
+        <div className="relative">
+          <HiOutlineUser
+            className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <input
+            type="text"
+            placeholder="Username"
+            className="h-11 w-full rounded-xl border border-input bg-background pl-10 pr-3 text-sm shadow-sm outline-none ring-primary/15 transition placeholder:text-muted-foreground focus:border-primary/50 focus:ring-4"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+        </div>
 
-        {/* Email */}
-        <input
-          type="email"
-          placeholder="Email"
-          className="w-full rounded border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
+        <div className="relative">
+          <HiOutlineEnvelope
+            className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            className="h-11 w-full rounded-xl border border-input bg-background pl-10 pr-3 text-sm shadow-sm outline-none ring-primary/15 transition placeholder:text-muted-foreground focus:border-primary/50 focus:ring-4"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
 
-        {/* Password */}
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full rounded border px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        <div className="relative">
+          <HiOutlineLockClosed
+            className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <input
+            type="password"
+            placeholder="Password"
+            className="h-11 w-full rounded-xl border border-input bg-background pl-10 pr-3 text-sm shadow-sm outline-none ring-primary/15 transition placeholder:text-muted-foreground focus:border-primary/50 focus:ring-4"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
 
-        {/* Error */}
         {message && (
-          <p className="text-center text-sm text-red-500">
+          <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-center text-sm text-destructive">
             {message}
           </p>
         )}
 
-        {/* Button */}
         <button
           type="submit"
           disabled={loading}
-          className="
-            w-full rounded-lg bg-blue-600 py-2 font-semibold text-white
-            hover:bg-blue-700
-            disabled:cursor-not-allowed disabled:opacity-50
-            transition
-          "
+          className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-gradient-to-r from-primary to-violet-500 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/25 transition hover:from-primary/90 hover:to-violet-500/90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? "Registering..." : "Register"}
         </button>
