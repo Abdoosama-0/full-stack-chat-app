@@ -1,14 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { useSocket } from "../provider/SocketProvider";
+import { useSelectedUserStore } from "../store/selectedUser";
+import{useUserData} from "../store/userData"
 
-interface ChatProps {
-  chatId?: number;
-  user?: {
-    username: string;
-    id: string;
-  };
+interface MessagesProps {
+  chatId: string|null;
+  userName: string|null;
+  userId: number|null;
+  avatar: string|null;
+
 }
 
 interface Message {
@@ -18,12 +20,14 @@ interface Message {
   createdAt: string;
 }
 
-const Chat = ({ user }: ChatProps) => {
+const Messages = ({ chatId, userName, userId, avatar }: MessagesProps) => {
+    const selectedUserId = useSelectedUserStore(
+    (state) => state.selectedUserId
+  );
   const socket = useSocket();
-
+const { token } = useUserData();
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [chatId, setChatId] = useState<number | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
 
@@ -32,11 +36,12 @@ const Chat = ({ user }: ChatProps) => {
   // ===============================
 
   const fetchChatHistory = async (chatId: number) => {
+
+    
     try {
       setLoading(true);
       setErrorMessage("");
 
-      const token = localStorage.getItem("token") || "";
 
       const res = await fetch(
         `http://localhost:5000/api/chat/${chatId}/messages`,
@@ -72,53 +77,11 @@ const Chat = ({ user }: ChatProps) => {
     }
   };
 
-  // ===============================
-  // Fetch Chat ID
-  // ===============================
-
-  useEffect(() => {
-    const fetchChatId = async () => {
-      try {
-        setLoading(true);
-        setErrorMessage("");
-
-        const token = localStorage.getItem("token") || "";
-
-        const res = await fetch(
-          `http://localhost:5000/api/chat/getChatId/${user?.id}`,
-          {
-            method: "GET",
-            headers: {
-              Authorization: "Bearer " + token,
-            },
-          }
-        );
-
-        const data = await res.json();
-
-        if (!res.ok) {
-          setErrorMessage(data.message || "No chat found");
-        } else {
-          setChatId(data.chatId);
-          fetchChatHistory(data.chatId);
-        }
-      } catch (err) {
-        setErrorMessage(
-          err instanceof Error ? err.message : "An error occurred"
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (user?.id) {
-      fetchChatId();
+useEffect(() => {
+    if (chatId && chatId !== "-1") {
+      fetchChatHistory(Number(chatId));
     }
-  }, [user]);
-
-  // ===============================
-  // Listen for new messages
-  // ===============================
+  }, [chatId]);
 
   useEffect(() => {
     if (!socket) return;
@@ -127,7 +90,7 @@ const Chat = ({ user }: ChatProps) => {
       setMessages((prev) => [
         ...prev,
         {
-          id: Date.now(), // مؤقت لو الباك مش بيرجع id
+          id: Date.now(), 
           content: data.content,
           sender: data.from,
           createdAt: data.createdAt,
@@ -147,10 +110,17 @@ const Chat = ({ user }: ChatProps) => {
   // ===============================
 
   const sendMessage = () => {
-    if (!socket || !newMessage.trim()) return;
+    alert("send message")
+    if (!socket ) {
+      alert("No socket connection");
+      return};
+ if (!newMessage.trim()) {
+  alert("Message cannot be empty");
+  return};
+    
 
     socket.emit("send-message", {
-      toUsername: user?.username,
+      toUsername: userName,
       content: newMessage,
     });
 
@@ -163,7 +133,8 @@ const Chat = ({ user }: ChatProps) => {
 
   return (
     <div style={{ padding: "20px" }}>
-      <h2>Conversation with {user?.username}</h2>
+      <h2>Conversation with {userName}</h2>
+      <h2>{selectedUserId}</h2>
 
       {loading && <p>Loading...</p>}
       {errorMessage && <p style={{ color: "red" }}>{errorMessage}</p>}
@@ -202,4 +173,4 @@ const Chat = ({ user }: ChatProps) => {
   );
 };
 
-export default Chat;
+export default Messages;

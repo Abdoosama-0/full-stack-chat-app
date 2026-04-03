@@ -9,9 +9,10 @@ const GuestPage = () => {
   <Button>Register</Button>
 </Link>
 
-      
-      <Button  className="">log in</Button>
-
+      <Link href={'/auth/login'}>
+   
+      <Button   className="">log in</Button>
+   </Link>
       
     </div>
   )

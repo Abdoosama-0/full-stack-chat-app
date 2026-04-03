@@ -1,11 +1,13 @@
 import React from 'react'
-import ChatHistory from './ChatHistory'
 
 import Search from './Search'
 import Conversation from './Conversation'
 import Nav from './Nav'
+import PreviousChats from './PreviousChats'
 
 const UserPage = () => {
+ 
+
   return (
     <div>
       {/**nav */}
@@ -14,7 +16,7 @@ const UserPage = () => {
       <div className='border-r-4 border-black'>
     
     <Search/>
-    <ChatHistory />
+    <PreviousChats />
     </div>
     <div>
       <Conversation chatId={3} />

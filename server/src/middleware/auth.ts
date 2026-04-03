@@ -32,9 +32,9 @@ export const authMiddleware = (
       token,
       process.env.JWT_SECRET as string
     ) as JwtPayload;
-    console.log(decoded);
+  
     req.user = decoded; 
-    console.log("Authenticated user:", req.user);
+  
     next();
   } catch (error) {
     return res.status(401).json({ message: 'Invalid or expired token' });

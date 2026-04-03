@@ -2,11 +2,12 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-
+import{useUserData} from "../../store/userData"
 const Login = () => {
   const router = useRouter();
+  const { setToken, setUserName, setEmail, setId } = useUserData();
 
-  const [email, setEmail] = useState("");
+  const [email, setEmailIn] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -21,6 +22,7 @@ const Login = () => {
 
       const res = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
+          credentials: "include", 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email,
@@ -37,11 +39,10 @@ const Login = () => {
 
       
 
-      // لو عندك توكن احفظه
-       localStorage.setItem("token", data.token);
-       localStorage.setItem("username", data.username);
-       localStorage.setItem("id", data.id);
-       localStorage.setItem("email", data.email);
+      setToken(data.token);
+      setUserName(data.username);
+      setEmail(data.email);
+      setId(data.id);
 
       //================logedin 
 
@@ -68,7 +69,7 @@ const Login = () => {
           placeholder="Enter your email"
           className="border p-2 rounded"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => setEmailIn(e.target.value)}
           required
         />
 

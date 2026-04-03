@@ -20,9 +20,13 @@ export const initSocket = (httpServer: any) => {
   //===========================ensure the jwt
   io.use((socket, next) => {
     // Token بيتبعت من العميل في handshake.auth
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++
     const token = socket.handshake.query.token;
+  // const token = socket.request.headers.cookie;
+
+    //++++++++++++++++++++++++++++++++++++++++++++++++++++
+
     if (!token) return next(new Error("Unauthorized"));
-    console.log("Received token:", token);
 
     try {
       const decoded = jwt.verify(token as string, process.env.JWT_SECRET as string);
@@ -40,8 +44,8 @@ export const initSocket = (httpServer: any) => {
 
     socket.join(`user:${username}`);
 
-    console.log('🟢 User connected:', socket.id);
-    console.log('🟢 username:', username);
+    console.log("\n" ,'=====================',"\n",'🟢 User connected:', socket.id);
+    console.log('🟢 username:', username,"\n" ,'=====================');
     //=======================
     socket.on(
       'send-message',

@@ -1,17 +1,11 @@
 'use client'
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import GuestPage from "./components/guestPage"
 import UserPage from "./components/userPage";
-
+import{useUserData} from "./store/userData"
 
 export default function Home() {
-const [token, setToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    // ده هيتنفذ بس بعد ما الصفحة تبقى على المتصفح
-    const storedToken = localStorage.getItem("token");
-    setToken(storedToken);
-  }, []);
+  const { token } = useUserData();
 
 if (token) {
   return (

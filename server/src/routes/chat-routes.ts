@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getChatHistory,getUserChats ,getChatId} from '../controllers/chat-controller';
+import { getChatHistory,getUserChats ,getChatData} from '../controllers/chat-controller';
 import { authMiddleware } from '../middleware/auth';
 
 const router = Router();
@@ -7,7 +7,7 @@ const router = Router();
 // GET chat history
 router.get('/:chatId/messages', authMiddleware, getChatHistory);
 router.get('/getUserChats', authMiddleware, getUserChats);
-router.get('/getChatId/:receiverId', authMiddleware, getChatId);
+router.get('/getChatData/:receiverId', authMiddleware, getChatData);
 
 
 

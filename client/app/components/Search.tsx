@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import Chat from "./Chat";
+import Chat from "./Messages";
 import { useChatStore } from "../store/chatStore";
+import { useSelectedUserStore } from "../store/selectedUser";
+import{useUserData} from "../store/userData"
 
 
 const Search = () => {
@@ -15,6 +17,16 @@ const Search = () => {
   const setSelectedChatId = useChatStore(
     (state) => state.setSelectedChatId
   );
+  const setSelectedUserId = useSelectedUserStore(
+    (state) => state.setSelectedUserId
+  );
+  const setSelectedUserName = useSelectedUserStore(
+    (state) => state.setSelectedUserName
+  );
+  const setSelectedUserAvatar = useSelectedUserStore(
+    (state) => state.setSelectedUserAvatar
+  );
+
   //=========================
   useEffect(() => {
     if (!query.trim()) {
@@ -26,8 +38,7 @@ const Search = () => {
       try {
         setLoading(true);
         setMessage("");
-
-        const token = localStorage.getItem("token") || "";
+  const { token } = useUserData();
 
         const res = await fetch(
           `http://localhost:5000/api/user/search?q=${query}`,
@@ -58,14 +69,14 @@ const Search = () => {
   }, [query]); // 👈 كل ما query تتغير يتعمل fetch
 //=========================
 
- const fetchChatId = async (user: any) => {
+ const fetchChatData = async (user: any) => {
       try {
         setLoading(true);
         setMessage("");
 
         const token = localStorage.getItem("token") || "";
         const res = await fetch(
-          `http://localhost:5000/api/chat/getChatId/${user?.id}`,
+          `http://localhost:5000/api/chat/getChatData/${user?.id}`,
           {
             method: "GET",
             headers: {
@@ -77,11 +88,20 @@ const Search = () => {
         const data = await res.json();
 
         if (!res.ok) {
+            setSelectedUserId(user.id);
+            setSelectedUserName(user.username);
+            setSelectedUserAvatar(user.avatar);
+         
+
           setMessage(data.message || "No chat found");
                      setSelectedChatId("-1")
 
         } else {
+
            setSelectedChatId(data.chatId)
+            setSelectedUserId(user.id);
+            setSelectedUserName(user.username);
+            setSelectedUserAvatar(user.avatar);
           
         }
       } catch (err) {
@@ -94,7 +114,7 @@ const Search = () => {
     };
     const handleUserClick = (user: any) => {
       setClickedUser(user);
-      fetchChatId(user);
+      fetchChatData(user);
     }
   return (
     <div className="max-w-sm">

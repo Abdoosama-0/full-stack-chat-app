@@ -1,13 +1,17 @@
 import { Button } from '@/components/ui/button'
 import React from 'react'
+import{useUserData} from "../store/userData"
+import { useSelectedUserStore } from '../store/selectedUser';
+import { useChatStore } from '../store/chatStore';
+
+
 
 const Logout = () => {
-    const handleLogout = () => {
-        localStorage.removeItem("token");
-        window.location.href = "/"; // Redirect to home page after logout
-      };
+ const { clearUserData } = useUserData();
+ const { clearSelectedUser } = useSelectedUserStore();
+ const { clearSelectedChat } = useChatStore();
     return (
-    <Button onClick={handleLogout}  >Logout</Button>
+    <Button onClick={() => { clearUserData(); clearSelectedUser(); clearSelectedChat(); }}  >Logout</Button>
   )
 }
 

@@ -48,8 +48,10 @@ export const searchUsers = async (req: AuthRequest, res: Response) => {
       select: {
         id: true,
         username: true,
+        avatar:true,
       },
     });
+    console.log("Search results for query:", search, "=>", users);
 
     res.json(users);
   } catch (error) {

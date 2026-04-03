@@ -8,6 +8,7 @@ import jwt from 'jsonwebtoken';
 import { hashPassword, comparePassword } from '../utils/hash';
 import redis from '../config/redis';
 
+import cookieParser  from 'cookie-parser';
 
 export const deleteUserdatabyEmail = async (req: Request, res: Response) => {
   try {
@@ -175,6 +176,13 @@ export const login = async (req: Request, res: Response) => {
   
 
       const token = jwt.sign(payload, secret);
+      res.cookie("token", token, {
+    httpOnly: true,
+    secure: false, // HTTPS في production
+    sameSite: "strict",
+    maxAge: 7 * 24 * 60 * 60 * 1000
+  });
+
 
 
     return res.json({
