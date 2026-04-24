@@ -5,6 +5,7 @@ import { useSocket } from "../provider/SocketProvider";
 import { useSelectedUserStore } from "../store/selectedUser";
 import{useUserData} from "../store/userData"
 import { HiOutlinePaperAirplane } from "react-icons/hi2";
+import { Span } from "next/dist/trace";
 
 interface MessagesProps {
   chatId: string|null;
@@ -154,16 +155,18 @@ useEffect(() => {
 
       <div className="h-[min(52vh,360px)] overflow-y-auto rounded-2xl border border-border/70 bg-muted/25 p-4 shadow-inner">
         <div className="space-y-3">
-          {messages.map((msg, index) => (
-            <div
-              key={msg.id ?? index}
-              className="rounded-xl border border-border/40 bg-card/90 px-3 py-2.5 text-sm shadow-sm"
-            >
-              <span className="font-semibold text-primary">{msg.sender}</span>
-              <span className="text-muted-foreground">: </span>
-              <span className="text-foreground">{msg.content}</span>
-            </div>
-          ))}
+{messages.map((msg, index) => (
+  <div
+    key={msg.id ?? index}
+    className={`rounded-xl w-fit border border-border/40 bg-card/90 px-3 py-2.5 text-sm shadow-sm ${
+      msg.sender === userName ? "ml-auto text-right" : "mr-auto text-left"
+    }`}
+  >
+    <span dir={msg.sender === userName ? "rtl" : "ltr"}>
+      {msg.content}
+    </span>
+  </div>
+))}
         </div>
       </div>
 

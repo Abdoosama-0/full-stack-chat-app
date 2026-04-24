@@ -13,6 +13,8 @@ type Message = {
 };
 
 type Chat = {
+  name: any;
+  isGroup: any;
   id: number;
   isPrivate?: boolean;
   otherUser?: {
@@ -152,63 +154,82 @@ const ChatList = () => {
       )}
 
       <div className="space-y-2">
-        {chats.map((chat) => {
-          const lastMessage = chat.messages?.[0];
+   {chats.map((chat) => {
+  const lastMessage = chat.messages?.[0];
 
-          const user = getChatUser(chat);
+  const user = chat.isGroup ? null : getChatUser(chat);
 
-          return (
-            <div
-              key={chat.id}
-              onClick={() => {
-                setSelectedChatId(String(chat.id));
+  const displayName = chat.isGroup
+    ? chat.name
+    : user?.username || "Unknown";
 
-                setSelectedUserId(user.id ?? null);
-                setSelectedUserName(user.username ?? null);
-                setSelectedUserAvatar(user.avatar ?? null);
-              }}
-              className="group flex cursor-pointer items-start gap-3 rounded-2xl border border-border/75 bg-card/90 p-3 shadow-sm transition hover:border-primary/35 hover:bg-accent/30 hover:shadow-md"
-            >
-  
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  previewPhoto(user.avatar);
-                }}
-                className="mt-0.5 flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-muted/70 transition group-hover:border-primary/40"
-              >
-                {user.avatar && (
-                  <img
-                    src={user.avatar}
-                    alt="avatar"
-                      className="h-full w-full cursor-zoom-in object-cover"
-                  />
-                ) }
-                                  <ImagePreview
-  imageUrl={preview}
-  onClose={() => setPreview(null)}
-/>
-              </button>
+  const displayAvatar = chat.isGroup ? null : user?.avatar;
 
-              <div className="min-w-0 flex-1 space-y-1">
-                <p className="truncate text-sm font-semibold text-foreground">
-                  {user.username || "Unknown"}
-                </p>
-                <p className="line-clamp-2 text-sm text-muted-foreground">
-                  {lastMessage?.content || "No messages yet"}
-                </p>
-              </div>
+  return (
+    <div
+      key={chat.id}
+      onClick={() => {
+        setSelectedChatId(String(chat.id));
 
-              <div
-                onClick={(e) => e.stopPropagation()}
-                className="shrink-0"
-              >
-                <ChatMenu chatId={chat.id} />
-              </div>
-            </div>
-          );
-        })}
+        if (!chat.isGroup) {
+          setSelectedUserId(user?.id ?? null);
+          setSelectedUserName(user?.username ?? null);
+          setSelectedUserAvatar(user?.avatar ?? null);
+        } else {
+          setSelectedUserId(null);
+          setSelectedUserName(chat.name ?? null);
+          setSelectedUserAvatar(null);
+        }
+      }}
+      className="group flex cursor-pointer items-start gap-3 rounded-2xl border border-border/75 bg-card/90 p-3 shadow-sm transition hover:border-primary/35 hover:bg-accent/30 hover:shadow-md"
+    >
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (displayAvatar) previewPhoto(displayAvatar);
+        }}
+        className="mt-0.5 flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-muted/70 transition group-hover:border-primary/40"
+      >
+        {chat.isGroup ? (
+          <div className="flex h-full w-full items-center justify-center text-sm font-bold text-muted-foreground">
+            {chat.name?.charAt(0).toUpperCase()}
+          </div>
+        ) : (
+          displayAvatar && (
+            <img
+              src={displayAvatar}
+              alt="avatar"
+              className="h-full w-full cursor-zoom-in object-cover"
+            />
+          )
+        )}
+
+        <ImagePreview
+          imageUrl={preview}
+          onClose={() => setPreview(null)}
+        />
+      </button>
+
+      <div className="min-w-0 flex-1 space-y-1">
+        <p className="truncate text-sm font-semibold text-foreground">
+          {displayName}
+        </p>
+
+        <p className="line-clamp-2 text-sm text-muted-foreground">
+          {lastMessage?.content || "No messages yet"}
+        </p>
+      </div>
+
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="shrink-0"
+      >
+        <ChatMenu chatId={chat.id} />
+      </div>
+    </div>
+  );
+})}
       </div>
 
    

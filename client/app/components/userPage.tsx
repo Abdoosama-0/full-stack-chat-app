@@ -3,6 +3,7 @@ import React from 'react'
 import Search from './Search'
 import Conversation from './Conversation'
 import ChatList from './ChatList'
+import CreateGroup from './CreateGroup'
 
 const UserPage = () => {
  
@@ -13,11 +14,12 @@ const UserPage = () => {
         <aside className="w-full shrink-0 space-y-5 rounded-2xl border border-border/70 bg-card/80 p-5 shadow-sm backdrop-blur-sm lg:max-w-md">
           <Search />
           <ChatList />
+          
         </aside>
         <main className="min-h-[65vh] flex-1 rounded-2xl border border-border/70 bg-card/90 p-5 shadow-sm backdrop-blur-sm sm:p-6">
           <Conversation chatId={3} />
         </main>
-      </div>
+      </div><CreateGroup/>
     </div>
   )
 }

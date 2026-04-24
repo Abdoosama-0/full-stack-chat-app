@@ -15,11 +15,15 @@ const ImagePreview = ({ imageUrl, onClose }: Props) => {
 
   return createPortal(
     <div
-      className="fixed inset-0 z-40 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md transition-opacity duration-200"
-      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-md "
+      onClick={() => {
+
+  onClose();
+ 
+}}
     >
       <div
-        className="relative w-full max-w-6xl transition-transform duration-200 scale-100 hover:scale-[1.01]"
+        className="relative w-full max-w-6xl "
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}

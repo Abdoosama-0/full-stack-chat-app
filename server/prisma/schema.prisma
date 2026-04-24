@@ -34,14 +34,14 @@ model User {
 // CHATS
 //////////////////////
 model Chat {
-  id        Int          @id @default(autoincrement())
-  createdAt DateTime     @default(now())
+  id        Int      @id @default(autoincrement())
+  name      String?  
+  isGroup   Boolean  @default(false) // 👈 جديد
+  createdAt DateTime @default(now())
 
-  // relations
   members   ChatMember[]
   messages  Message[]
 }
-
 //////////////////////
 // CHAT MEMBERS
 //////////////////////
@@ -51,6 +51,8 @@ model ChatMember {
 
   hidden Boolean @default(false)
   lastSeenMessageId BigInt?
+
+  isAdmin Boolean @default(false) // 👈 add this
 
   chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

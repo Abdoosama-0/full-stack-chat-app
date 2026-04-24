@@ -13,6 +13,7 @@ const Nav = () => {
     <header className="sticky top-0 z-20 border-b border-border/80 bg-card/80 shadow-sm backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
+         
 
                    <Link className='flex items-center gap-2' href="/">
        
@@ -36,6 +37,7 @@ const Nav = () => {
             <Logout />
           </div>
         )}
+<h1 >{token}</h1>
       </div>
     </header>
   )
