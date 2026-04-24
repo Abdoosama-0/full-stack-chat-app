@@ -63,9 +63,12 @@ const VerifyOTP = ({params,}: {params: Promise<{ email: string }>;}) => {
         onSubmit={handleVerifyOtp}
         className="w-full max-w-md space-y-5 rounded-2xl border border-border/70 bg-card/95 p-8 shadow-xl shadow-primary/10 backdrop-blur-sm"
       >
-        <h2 className="text-center text-2xl font-semibold tracking-tight text-foreground">
-          Verify OTP
-        </h2>
+        <div className="space-y-1 text-center">
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+            Verify OTP
+          </h2>
+          <p className="text-sm text-muted-foreground">Enter the code sent to your email.</p>
+        </div>
 
         <p className="flex items-center justify-center gap-2 rounded-xl border border-border/60 bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
           <HiOutlineEnvelope className="size-5 shrink-0 text-primary" aria-hidden />

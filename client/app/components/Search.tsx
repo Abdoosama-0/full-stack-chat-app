@@ -27,7 +27,7 @@ const Search = () => {
   const setSelectedUserAvatar = useSelectedUserStore(
     (state) => state.setSelectedUserAvatar
   );
-
+const { token } = useUserData();
   //=========================
   useEffect(() => {
     if (!query.trim()) {
@@ -39,7 +39,7 @@ const Search = () => {
       try {
         setLoading(true);
         setMessage("");
-  const { token } = useUserData();
+  
 
         const res = await fetch(
           `http://localhost:5000/api/user/search?q=${query}`,
@@ -51,15 +51,29 @@ const Search = () => {
             },
           }
         );
+        
 
         const data = await res.json();
+       
 
         if (!res.ok) {
+       
           setMessage(data.message || "Search failed");
         } else {
-          setUsers(data.users || data); // حسب شكل الريسبونس
+           if ( data.length === 0) {
+        
+            setMessage("No users found");
+          }
+          else {  
+            setMessage("");
+            setUsers( data);  }
+  
+       
+         
         }
       } catch (err) {
+        
+
         setMessage(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setLoading(false);
@@ -118,7 +132,7 @@ const Search = () => {
       fetchChatData(user);
     }
   return (
-    <div className="w-full max-w-md space-y-3">
+    <div className="w-full space-y-3">
       <div className="relative">
         <HiOutlineMagnifyingGlass
           className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
@@ -145,11 +159,11 @@ const Search = () => {
         </p>
       )}
 
-      <ul className="mt-1 max-h-64 space-y-1 overflow-y-auto rounded-xl border border-border/60 bg-muted/20 p-1">
+      <ul className="mt-1 max-h-64 space-y-1 overflow-y-auto rounded-2xl border border-border/60 bg-muted/20 p-1.5">
         {users.map((user) => (
           <li onClick={() => handleUserClick(user)}
             key={user.id}
-            className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-foreground transition hover:bg-primary/10 hover:text-primary"
+            className="flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium text-foreground transition hover:bg-primary/10 hover:text-primary"
           >
             <HiOutlineUser className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             {user.username}

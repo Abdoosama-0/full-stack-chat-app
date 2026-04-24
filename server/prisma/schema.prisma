@@ -49,10 +49,13 @@ model ChatMember {
   chatId Int
   userId Int
 
-  chat   Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hidden Boolean @default(false)
+  lastSeenMessageId BigInt?
 
-  @@id([chatId, userId]) // composite primary key
+  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([chatId, userId])
 }
 
 //////////////////////

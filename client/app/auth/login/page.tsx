@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import{useUserData} from "../../store/userData"
 import { HiOutlineEnvelope, HiOutlineEye, HiOutlineEyeSlash, HiOutlineLockClosed } from "react-icons/hi2";
+import Link from "next/dist/client/link";
 const Login = () => {
   const router = useRouter();
   const { setToken, setUserName, setEmail, setId } = useUserData();
@@ -59,13 +60,17 @@ const Login = () => {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-primary/5 to-violet-200/25 px-4 py-12">
-      <form
-        onSubmit={handleLogin}
-        className="flex w-full max-w-md flex-col gap-5 rounded-2xl border border-border/70 bg-card/95 p-8 shadow-xl shadow-primary/10 backdrop-blur-sm"
-      >
-        <h2 className="text-center text-2xl font-semibold tracking-tight text-foreground">
-          Login
-        </h2>
+      <div className="w-full max-w-md space-y-4">
+        <form
+          onSubmit={handleLogin}
+          className="flex w-full flex-col gap-5 rounded-2xl border border-border/70 bg-card/95 p-8 shadow-xl shadow-primary/10 backdrop-blur-sm"
+        >
+          <div className="space-y-1 text-center">
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+              Login
+            </h2>
+            <p className="text-sm text-muted-foreground">Access your account to continue chatting.</p>
+          </div>
 
         <div className="relative">
           <HiOutlineEnvelope
@@ -115,14 +120,21 @@ const Login = () => {
           </p>
         )}
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="inline-flex h-11 items-center justify-center rounded-xl bg-gradient-to-r from-primary to-violet-500 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/25 transition hover:from-primary/90 hover:to-violet-500/90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {loading ? "Loading..." : "Login"}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={loading}
+            className="inline-flex h-11 items-center justify-center rounded-xl bg-gradient-to-r from-primary to-violet-500 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/25 transition hover:from-primary/90 hover:to-violet-500/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading ? "Loading..." : "Login"}
+          </button>
+        </form>
+        <p className="text-center text-sm text-muted-foreground">
+          Don&apos;t have an account?{" "}
+          <Link href="/auth/register" className="font-medium text-primary hover:underline">
+            Register
+          </Link>
+        </p>
+      </div>
     </div>
   );
 };

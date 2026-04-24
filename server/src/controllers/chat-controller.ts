@@ -9,12 +9,13 @@ interface JwtPayload {
 export interface AuthRequest extends Request {
   user?: JwtPayload;
 }
-export const getChatHistory = async (  req: AuthRequest,res: Response,) => {
+export const getChatHistory = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user) {
-  return res.status(401).json({ message: 'Unauthorized' });
-}
-    const userId = req.user.userId; // من auth middleware
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const userId = req.user.userId;
     const chatId = Number(req.params.chatId);
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 50;
@@ -23,12 +24,10 @@ export const getChatHistory = async (  req: AuthRequest,res: Response,) => {
       return res.status(400).json({ message: 'chatId is required' });
     }
 
-    // 1️⃣ تأكد إن المستخدم عضو في الشات
+    // 1️⃣ check membership
     const chat = await prisma.chat.findUnique({
       where: { id: chatId },
-      include: {
-        members: true, // عشان نتاكد من العضو
-      },
+      include: { members: true },
     });
 
     if (!chat) {
@@ -40,28 +39,52 @@ export const getChatHistory = async (  req: AuthRequest,res: Response,) => {
       return res.status(403).json({ message: 'You are not a member of this chat' });
     }
 
-    // 2️⃣ جلب الرسائل
-const messages = await prisma.message.findMany({
-  where: { chatId },
-  orderBy: { createdAt: 'asc' },
-  skip: (page - 1) * limit,
-  take: limit,
-  include: { sender: { select: { username: true } } },
-});
+    // 2️⃣ get chat member state
+    const member = await prisma.chatMember.findUnique({
+      where: {
+        chatId_userId: {
+          chatId,
+          userId,
+        },
+      },
+    });
 
-// حل المشكلة: تحويل الـ BigInt لـ string
-const safeMessages = messages.map((m) => ({
-  ...m,
-  id: m.id.toString(),
-  chatId: m.chatId.toString(),
-  senderId: m.senderId.toString(),
-}));
+    // 3️⃣ get messages (filtered)
+    const messages = await prisma.message.findMany({
+      where: {
+        chatId,
+        ...(member?.lastSeenMessageId && {
+          id: {
+            gt: member.lastSeenMessageId,
+          },
+        }),
+      },
+      orderBy: { createdAt: 'asc' },
+      skip: (page - 1) * limit,
+      take: limit,
+      include: {
+        sender: { select: { username: true } },
+      },
+    });
 
-res.json({ chatId, messages: safeMessages, page, limit });
+    // 4️⃣ safe response
+    const safeMessages = messages.map((m) => ({
+      ...m,
+      id: m.id.toString(),
+      chatId: m.chatId.toString(),
+      senderId: m.senderId.toString(),
+    }));
 
-  } catch (error: any) {
+    return res.json({
+      chatId,
+      messages: safeMessages,
+      page,
+      limit,
+    });
+
+  } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 };
 
@@ -75,7 +98,10 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
     const chats = await prisma.chat.findMany({
       where: {
         members: {
-          some: { userId },
+          some: {
+      userId,
+      hidden: false,
+    },
         },
       },
       include: {
@@ -225,4 +251,37 @@ console.log("Chat members:", chat.id);
     console.error(error);
     return res.status(500).json({ message: "Server error" });
   }
+};
+
+//===============delete chat================
+export const deleteChat = async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.userId;
+  const chatId = Number(req.params.chatId);
+
+  if (!userId) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  // 1️⃣ هات آخر رسالة في الشات
+  const lastMessage = await prisma.message.findFirst({
+    where: { chatId },
+    orderBy: { createdAt: "desc" },
+    select: { id: true },
+  });
+
+  // 2️⃣ اعمل update للـ ChatMember
+  await prisma.chatMember.update({
+    where: {
+      chatId_userId: {
+        chatId,
+        userId,
+      },
+    },
+    data: {
+      hidden: true,
+      lastSeenMessageId: lastMessage?.id ?? null, // 👈 الحل هنا
+    },
+  });
+
+  return res.json({ message: "Chat hidden for you" });
 };

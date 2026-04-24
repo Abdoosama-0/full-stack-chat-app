@@ -2,11 +2,11 @@ import { create } from "zustand";
 
 type selectedUserStore = {
   selectedUserId: number | null;
-  setSelectedUserId: (id: number) => void;
-   selectedUserName: string | null;
-  setSelectedUserName: (name: string) => void;
+  setSelectedUserId: (id: number | null) => void;
+  selectedUserName: string | null;
+  setSelectedUserName: (name: string | null) => void;
   selectedUserAvatar: string | null;
-  setSelectedUserAvatar: (avatar: string) => void;
+  setSelectedUserAvatar: (avatar: string | null) => void;
 
   clearSelectedUser: () => void; 
 };

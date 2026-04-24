@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSocket } from "../provider/SocketProvider";
 import { useSelectedUserStore } from "../store/selectedUser";
 import{useUserData} from "../store/userData"
@@ -152,12 +152,12 @@ useEffect(() => {
         </p>
       )}
 
-      <div className="h-[min(50vh,320px)] overflow-y-auto rounded-xl border border-border/70 bg-muted/25 p-4 shadow-inner">
+      <div className="h-[min(52vh,360px)] overflow-y-auto rounded-2xl border border-border/70 bg-muted/25 p-4 shadow-inner">
         <div className="space-y-3">
           {messages.map((msg, index) => (
             <div
               key={msg.id ?? index}
-              className="rounded-lg border border-border/40 bg-card/90 px-3 py-2 text-sm shadow-sm"
+              className="rounded-xl border border-border/40 bg-card/90 px-3 py-2.5 text-sm shadow-sm"
             >
               <span className="font-semibold text-primary">{msg.sender}</span>
               <span className="text-muted-foreground">: </span>

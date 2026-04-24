@@ -9,6 +9,7 @@ import { hashPassword, comparePassword } from '../utils/hash';
 import redis from '../config/redis';
 
 import cookieParser  from 'cookie-parser';
+import { uploadToCloudinary } from '../utils/uploadPhoto';
 
 export const deleteUserdatabyEmail = async (req: Request, res: Response) => {
   try {
@@ -39,66 +40,72 @@ export const deleteUserdatabyEmail = async (req: Request, res: Response) => {
   }
 };
 export const register = async (req: Request, res: Response) => {
-    const { email, username, password } = req.body;
+  const { email, username, password } = req.body;
 
-    if (!email || !username || !password) {
-        return res.status(400).json({ message: 'Missing fields' });
+  if (!email || !username || !password) {
+    return res.status(400).json({ message: "Missing fields" });
+  }
+
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      OR: [{ email }, { username }],
+    },
+  });
+
+  if (existingUser) {
+    return res.status(409).json({
+      message: "Email or username already exists",
+    });
+  }
+
+  try {
+    const passwordHash = await hashPassword(password);
+    const otp = crypto.randomInt(100000, 999999).toString();
+
+    const defaultAvatar =
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRMcL4AEbLTIBKLFW09-AXSjpXEPXAVBHF5Qw&s";
+
+    // ================= HANDLE OPTIONAL AVATAR =================
+    let avatarUrl = defaultAvatar;
+
+    if (req.file) {
+      const uploadResult = await uploadToCloudinary(req.file);
+      avatarUrl = uploadResult.secure_url;
     }
-    const existingUser = await prisma.user.findFirst({
-  where: {
-    OR: [
-      { email },
-      { username },
-    ],
-  },
-});
 
-// if (existingUser) {
-//   return res.status(409).json({
-//     message: "Email or username already exists",
-//   });
-// }
+    // ================= SAVE TO REDIS =================
+    await redis.set(
+      `OTP:${email}`,
+      JSON.stringify({
+        otp,
+        username,
+        email,
+        password: passwordHash,
+        avatar: avatarUrl, // ✅ optional avatar
+      }),
+      {
+        EX: 300,
+      }
+    );
 
+    // ================= SEND EMAIL =================
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Verify your email",
+      text: `Your verification code is: ${otp}`,
+    });
 
-    try {
-        const passwordHash = await hashPassword(password);
-
-        const otp = crypto.randomInt(100000, 999999).toString();
-        // لو تستخدم redis@4
-        await redis.set(`OTP:${email}`, JSON.stringify({
-            otp,
-            username,
-            email,
-            password: passwordHash
-        }), {
-            EX: 300   // expiration بالثواني
-        });
-
-        const sendVerificationEmail = async (email: string, otp: string) => {
-            await transporter.sendMail({
-                from: process.env.EMAIL_USER,
-                to: email,
-                subject: "Verify your email",
-                text: `Your verification code is: ${otp}`
-            });
-        };
-        try {
-            await sendVerificationEmail(email, otp);
-            res.status(200).json({ message: "OTP sent to your email. Please verify to complete registration." });
-        } catch (err) {
-            res.status(500).json({ message: "Failed to send email", error: err });
-        }
-
-
-
-
-    } catch (error: any) {
-        if (error.code === 'P2002') {
-            return res.status(409).json({ message: 'Email or username already exists' });
-        }
-
-        return res.status(500).json({ message: 'Server error' });
-    }
+    return res.status(200).json({
+      message:
+        "OTP sent to your email. Please verify to complete registration.",
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      message: "Server error",
+      error,
+    });
+  }
 };
 
 interface OtpUserData {
@@ -106,6 +113,7 @@ interface OtpUserData {
   email: string;
   username: string;
   password: string;
+  avatar: string;
 }
 export const verifyOtp = async (req: Request, res: Response) => {
   const { email, otp } = req.body as { email?: string; otp?: string };
@@ -129,19 +137,21 @@ export const verifyOtp = async (req: Request, res: Response) => {
   }
 
   // 3️⃣ Create user in DB
-  const newUser = await prisma.user.create({
-    data: {
-      email: userData.email,
-      username: userData.username,
-      passwordHash: userData.password,
-    },
-    select: {
-      id: true,
-      email: true,
-      username: true,
-      createdAt: true,
-    },
-  });
+const newUser = await prisma.user.create({
+  data: {
+    email: userData.email,
+    username: userData.username,
+    passwordHash: userData.password,
+    avatar: userData.avatar, // ✅ added here
+  },
+  select: {
+    id: true,
+    email: true,
+    username: true,
+    avatar: true, // optional but recommended
+    createdAt: true,
+  },
+});
 
   // 4️⃣ Delete OTP from Redis
   await redis.del(`OTP:${email}`);
