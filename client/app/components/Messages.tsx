@@ -30,7 +30,14 @@ const Messages = ({ chatId, userName }: MessagesProps) => {
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-
+//===========emit("mark-chat-seen"==================
+  useEffect(() => {
+  if (!socket || !chatId) return;
+alert("mark-chat-seen emitted with chatId: " + chatId);
+  socket.emit("mark-chat-seen", {
+    chatId: Number(chatId),
+  });
+}, [chatId, socket]);
   // ================= FETCH HISTORY =================
   const fetchChatHistory = async (chatId: number) => {
     try {

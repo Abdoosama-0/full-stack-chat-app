@@ -13,6 +13,7 @@ type Message = {
 };
 
 type Chat = {
+  lastMessage: any;
   name: any;
   isGroup: any;
   id: number;
@@ -87,34 +88,40 @@ const ChatList = () => {
   }, [token]);
 
   // ================= SOCKET =================
-  useEffect(() => {
-    if (!socket) return;
+ useEffect(() => {
+  if (!socket) return;
 
-    const handleNewChat = (chat: Chat) => {
-      setChats((prev) => {
-        const exists = prev.find((c) => c.id === chat.id);
-        if (exists) {
-          return prev.map((c) => (c.id === chat.id ? chat : c));
-        }
-        return [chat, ...prev];
-      });
-    };
+  const handleUpdate = (data: any) => {
 
-    const handleUpdate = (chat: Chat) => {
-      setChats((prev) => {
-        const filtered = prev.filter((c) => c.id !== chat.id);
-        return [chat, ...filtered];
-      });
-    };
 
-    socket.on("new-chat", handleNewChat);
-    socket.on("chat-updated", handleUpdate);
+ setChats((prev) => {
+    const updated = prev.map((chat) => {
 
-    return () => {
-      socket.off("new-chat", handleNewChat);
-      socket.off("chat-updated", handleUpdate);
-    };
-  }, [socket]);
+     if (Number(chat.id) === Number(data.chatId)) {
+
+
+        return {
+          ...chat,
+          lastMessage: data.lastMessage,
+        };
+      }
+
+      return chat;
+    });
+      // يخلي الشات يطلع فوق
+      const moved = updated.find((c) => c.id === data.chatId);
+      const rest = updated.filter((c) => c.id !== data.chatId);
+
+      return moved ? [moved, ...rest] : updated;
+    });
+  };
+
+  socket.on("chat-updated", handleUpdate);
+
+  return () => {
+    socket.off("chat-updated", handleUpdate);
+  };
+}, [socket]);
 
   // ================= HELPER =================
   const getChatUser = (chat: Chat) => {
@@ -155,7 +162,7 @@ const ChatList = () => {
 
       <div className="space-y-2">
    {chats.map((chat) => {
-  const lastMessage = chat.messages?.[0];
+  const lastMessage = chat.lastMessage ||chat.lastMessage.content;
 
   const user = chat.isGroup ? null : getChatUser(chat);
 

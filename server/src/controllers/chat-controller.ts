@@ -13,7 +13,7 @@ export interface AuthRequest extends Request {
 export const getChatHistory = async (req: AuthRequest, res: Response) => {
   try {
     if (!req.user) {
-      return res.status(401).json({ message: 'Unauthorized' });
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
     const userId = req.user.userId;
@@ -22,25 +22,29 @@ export const getChatHistory = async (req: AuthRequest, res: Response) => {
     const limit = Number(req.query.limit) || 50;
 
     if (!chatId) {
-      return res.status(400).json({ message: 'chatId is required' });
+      return res.status(400).json({ message: "chatId is required" });
     }
 
-    // 1️⃣ check membership
+    // 1️⃣ check chat + membership
     const chat = await prisma.chat.findUnique({
       where: { id: chatId },
-      include: { members: true },
+      include: {
+        members: true,
+      },
     });
 
     if (!chat) {
-      return res.status(404).json({ message: 'Chat not found' });
+      return res.status(404).json({ message: "Chat not found" });
     }
 
     const isMember = chat.members.some((m) => m.userId === userId);
     if (!isMember) {
-      return res.status(403).json({ message: 'You are not a member of this chat' });
+      return res.status(403).json({
+        message: "You are not a member of this chat",
+      });
     }
 
-    // 2️⃣ get chat member state
+    // 2️⃣ get lastSeenMessageId for THIS user
     const member = await prisma.chatMember.findUnique({
       where: {
         chatId_userId: {
@@ -50,42 +54,45 @@ export const getChatHistory = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    // 3️⃣ get messages (filtered)
+    // 3️⃣ get ALL messages (no filtering)
     const messages = await prisma.message.findMany({
-      where: {
-        chatId,
-        ...(member?.lastSeenMessageId && {
-          id: {
-            gt: member.lastSeenMessageId,
-          },
-        }),
-      },
-      orderBy: { createdAt: 'asc' },
+      where: { chatId },
+      orderBy: { createdAt: "asc" },
       skip: (page - 1) * limit,
       take: limit,
       include: {
-        sender: { select: { username: true } },
+        sender: {
+          select: { username: true },
+        },
       },
     });
 
-    // 4️⃣ safe response
+    // 4️⃣ format messages
     const safeMessages = messages.map((m) => ({
-      ...m,
       id: m.id.toString(),
       chatId: m.chatId.toString(),
       senderId: m.senderId.toString(),
+      content: m.content,
+      type: m.type,
+      createdAt: m.createdAt,
+      sender: {
+        username: m.sender.username,
+      },
     }));
 
+    // 5️⃣ response
     return res.json({
       chatId,
       messages: safeMessages,
+      lastSeenMessageId: member?.lastSeenMessageId
+        ? member.lastSeenMessageId.toString()
+        : null,
       page,
       limit,
     });
-
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -154,37 +161,47 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
       }
 
       return {
-        id: chat.id.toString(),
+  id: chat.id.toString(),
 
-        isPrivate,
-        isGroup, // 👈 جديد
+  isPrivate,
+  isGroup,
 
-        ...(isGroup
-          ? {
-              name: chat.name, // 👈 اسم الجروب
-              members: chat.members.map((m) => ({
-                userId: m.userId.toString(),
-                username: m.user.username,
-                email: m.user.email,
-                avatar: m.user.avatar,
-              })),
-            }
-          : {
-              otherUser,
-            }),
-
-        messages: chat.messages.map((msg) => ({
-          id: msg.id.toString(),
-          chatId: msg.chatId.toString(),
-          senderId: msg.senderId.toString(),
-          content: msg.content,
-          type: msg.type,
-          createdAt: msg.createdAt,
-          sender: {
-            username: msg.sender.username,
-          },
+  ...(isGroup
+    ? {
+        name: chat.name,
+        members: chat.members.map((m) => ({
+          userId: m.userId.toString(),
+          username: m.user.username,
+          email: m.user.email,
+          avatar: m.user.avatar,
         })),
-      };
+      }
+    : {
+        otherUser,
+      }),
+
+/* 🔥 الجديد */
+  lastMessage: chat.messages[0]
+    ? {
+        id: chat.messages[0].id.toString(),
+        content: chat.messages[0].content,
+        createdAt: chat.messages[0].createdAt,
+      }
+    : null,
+
+  /* ✔ كل الرسائل زي ما هي */
+  messages: chat.messages.map((msg) => ({
+    id: msg.id.toString(),
+    chatId: msg.chatId.toString(),
+    senderId: msg.senderId.toString(),
+    content: msg.content,
+    type: msg.type,
+    createdAt: msg.createdAt,
+    sender: {
+      username: msg.sender.username,
+    },
+  })),
+};
     });
 
     return res.json({ chats: safeChats });

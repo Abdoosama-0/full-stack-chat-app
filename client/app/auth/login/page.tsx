@@ -7,7 +7,7 @@ import { HiOutlineEnvelope, HiOutlineEye, HiOutlineEyeSlash, HiOutlineLockClosed
 import Link from "next/dist/client/link";
 const Login = () => {
   const router = useRouter();
-  const { setToken, setUserName, setEmail, setId } = useUserData();
+  const { setToken, setUserName, setEmail, setId,setAvatar } = useUserData();
 
   const [email, setEmailIn] = useState("");
   const [password, setPassword] = useState("");
@@ -45,9 +45,10 @@ const Login = () => {
       setUserName(data.username);
       setEmail(data.email);
       setId(data.id);
+      setAvatar(data.avatar);
 
       //================logedin 
-
+alert("Login successful! Welcome, " + data.avatar);
 
       //=================
        router.push("/");

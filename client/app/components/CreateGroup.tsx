@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useUserData } from "../store/userData";
+import SearchForGroup from "./SearchForGroup";
 
 const CreateGroup = () => {
   const [clicked, setClicked] = useState(false);
@@ -96,7 +97,7 @@ const CreateGroup = () => {
             />
 
             {/* 👤 Add user */}
-            <div className="flex gap-2">
+            {/* <div className="flex gap-2">
               <input
                 type="text"
                 placeholder="Enter username"
@@ -110,7 +111,8 @@ const CreateGroup = () => {
               >
                 Add
               </button>
-            </div>
+            </div> */}
+            <SearchForGroup setUsernames={setUsernames} />
 
             {/* 👥 Selected Users */}
             <div className="flex flex-wrap gap-2">

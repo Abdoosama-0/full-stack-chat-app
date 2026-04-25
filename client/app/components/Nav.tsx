@@ -7,7 +7,9 @@ import { FaHome } from 'react-icons/fa';
 import Link from 'next/link';
 
 const Nav = () => {
-   const { token, userName } = useUserData();
+  
+   const { token, userName ,avatar } = useUserData();
+   
 
   return (
     <header className="sticky top-0 z-20 border-b border-border/80 bg-card/80 shadow-sm backdrop-blur-md">
@@ -32,7 +34,9 @@ const Nav = () => {
    
             <div className=" bg-background/70 px-3 py-2 text-sm font-medium text-foreground">
               {userName}
-            </div>
+                   </div>
+
+       
             <Account />
             <Logout />
           </div>

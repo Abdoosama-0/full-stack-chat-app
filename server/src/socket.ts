@@ -118,16 +118,37 @@ export const initSocket = (httpServer: any) => {
             content,
           },
         });
+                     await prisma.chat.update({
+  where: { id: chat.id },
+  data: {
+    lastMessageId: message.id,
+  },
+});
 
-        const payload = {
-          chatId: chat.id,
-          from: fromUser.username,
-          content,
-          createdAt: message.createdAt,
-        };
+console.log('lastMessageId updated for chat:', chat.id, 'with messageId:', message.id);
+
+   const payload = {
+  chatId: chat.id,
+  from: fromUser.username,
+  content,
+  createdAt: message.createdAt,
+};
 
         io.to(`user:${receiver.username}`).emit("new-message", payload);
         io.to(`user:${fromUser.username}`).emit("new-message", payload);
+   const chatUpdate = {
+  chatId: chat.id,
+  lastMessage: {
+    id: Number(message.id),
+    content: message.content,
+    createdAt: message.createdAt,
+    sender: fromUser.username,
+  },
+};
+
+
+io.to(`user:${receiver.username}`).emit("chat-updated", chatUpdate);
+io.to(`user:${fromUser.username}`).emit("chat-updated", chatUpdate);
 
         return;
       }
@@ -135,57 +156,107 @@ export const initSocket = (httpServer: any) => {
       // =========================
       // 2️⃣ GROUP CHAT
       // =========================
-      if (type === "group") {
-console.log("GROUP MESSAGE RECEIVED", { chatId, content });
+  if (type === "group") {
+  if (!chatId) return;
 
-        if (!chatId) return;
-console.log("GROUP MESSAGE RECEIVED", { chatId, content });
-        const chat = await prisma.chat.findUnique({
-          where: { id: chatId },
-          include: {
-            members: {
-              include: {
-                user: true,
-              },
-            },
-          },
-        });
+  const chat = await prisma.chat.findUnique({
+    where: { id: chatId },
+    include: {
+      members: {
+        include: { user: true },
+      },
+    },
+  });
 
-        if (!chat) return;
+  if (!chat) return;
 
-        // save message
-        const message = await prisma.message.create({
-          data: {
-            chatId,
-            senderId: fromUser.userId,
-            content,
-          },
-        });
+  // 1️⃣ save message
+  const message = await prisma.message.create({
+    data: {
+      chatId,
+      senderId: fromUser.userId,
+      content,
+    },
+  });
 
-        const payload = {
-          chatId,
-          from: fromUser.username,
-          content,
-          createdAt: message.createdAt,
-          isGroup: true,
-        };
+  // 2️⃣ update last message
+  await prisma.chat.update({
+    where: { id: chatId },
+    data: {
+      lastMessageId: message.id,
+    },
+  });
 
-        // 🔥 ابعت لكل أعضاء الجروب
-        for (const member of chat.members) {
-          io.to(`user:${member.user.username}`).emit(
-            "new-message",
-            payload
-          );
-        }
+  console.log("group lastMessage updated:", chatId, message.id);
 
-        return;
-      }
+  // 3️⃣ payload for chat list update
+  const chatUpdate = {
+    chatId,
+    lastMessage: {
+      id: Number(message.id),
+      content: message.content,
+      createdAt: message.createdAt,
+      sender: fromUser.username,
+    },
+  };
+
+  // 4️⃣ send message realtime (chat screen)
+  const messagePayload = {
+    chatId,
+    from: fromUser.username,
+    content,
+    createdAt: message.createdAt,
+    isGroup: true,
+  };
+
+  // 5️⃣ emit to all members
+  for (const member of chat.members) {
+    io.to(`user:${member.user.username}`).emit("new-message", messagePayload);
+    io.to(`user:${member.user.username}`).emit("chat-updated", chatUpdate);
+  }
+
+  return;
+}
     } catch (error) {
       console.error("Socket error:", error);
     }
   }
 );
 
+
+//============mark-chat-seen==================
+socket.on("mark-chat-seen", async ({ chatId }) => {
+  try {
+    const userId = fromUser.userId;
+
+    // هات آخر رسالة في الشات
+    const lastMessage = await prisma.message.findFirst({
+      where: { chatId },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!lastMessage) return;
+
+    // متحدثش لو آخر رسالة أنا اللي بعتها
+    if (lastMessage.senderId === userId) return;
+
+    await prisma.chatMember.update({
+      where: {
+        chatId_userId: {
+          chatId,
+          userId,
+        },
+      },
+      data: {
+        lastSeenMessageId: lastMessage.id,
+      },
+    });
+
+    console.log("seen updated:", chatId, userId, lastMessage.id);
+  } catch (err) {
+    console.error(err);
+  }
+});
     // ================= DISCONNECT =================
     socket.on("disconnect", () => {
       console.log("🔴 Disconnected:", username);
