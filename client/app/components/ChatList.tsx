@@ -39,7 +39,7 @@ const ChatList = () => {
   const socket = useSocket();
   const { token } = useUserData();
 
-  const { setSelectedChatId } = useChatStore();
+  const { setSelectedChatId, setIsGroup } = useChatStore();
 
   const {
     setSelectedUserId,
@@ -168,19 +168,20 @@ const ChatList = () => {
   return (
     <div
       key={chat.id}
-      onClick={() => {
-        setSelectedChatId(String(chat.id));
+     onClick={() => {
+  setSelectedChatId(String(chat.id));
+  setIsGroup(!!chat.isGroup); // 🔥 هنا الإضافة
 
-        if (!chat.isGroup) {
-          setSelectedUserId(user?.id ?? null);
-          setSelectedUserName(user?.username ?? null);
-          setSelectedUserAvatar(user?.avatar ?? null);
-        } else {
-          setSelectedUserId(null);
-          setSelectedUserName(chat.name ?? null);
-          setSelectedUserAvatar(null);
-        }
-      }}
+  if (!chat.isGroup) {
+    setSelectedUserId(user?.id ?? null);
+    setSelectedUserName(user?.username ?? null);
+    setSelectedUserAvatar(user?.avatar ?? null);
+  } else {
+    setSelectedUserId(null);
+    setSelectedUserName(chat.name ?? null);
+    setSelectedUserAvatar(null);
+  }
+}}
       className="group flex cursor-pointer items-start gap-3 rounded-2xl border border-border/75 bg-card/90 p-3 shadow-sm transition hover:border-primary/35 hover:bg-accent/30 hover:shadow-md"
     >
       <button

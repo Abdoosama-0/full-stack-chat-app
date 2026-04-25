@@ -4,6 +4,7 @@ import { useSelectedUserStore } from "../store/selectedUser";
 import Messages from './Messages';
 import { HiOutlineChatBubbleLeftRight } from 'react-icons/hi2';
 import ImagePreview from './ImagePreview';
+import ChatMembers from './ChatMembers';
 
 interface ConversationProps {
   chatId: number;
@@ -17,6 +18,9 @@ const Conversation = (props: ConversationProps) => {
   };
   const selectedChatId = useChatStore(
     (state) => state.selectedChatId
+  );
+  const isGroup = useChatStore(
+    (state) => state.isGroup
   );
   const selectedUserName = useSelectedUserStore(
     (state) => state.selectedUserName
@@ -48,6 +52,7 @@ const Conversation = (props: ConversationProps) => {
             )}
           </div>
           <span>Start conversation with {selectedUserName}</span>
+  
         </div>
         <Messages chatId={"-1"} userName={selectedUserName} userId={selectedUserId} avatar={""} />
       </div>
@@ -63,6 +68,7 @@ const Conversation = (props: ConversationProps) => {
             onClick={() => selectedUserAvatar && previewPhoto(selectedUserAvatar)}
             className="group flex size-10 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-muted/70 transition hover:border-primary/40"
           >
+
             {selectedUserAvatar&& (
               <img
                 src={selectedUserAvatar}
@@ -77,6 +83,8 @@ const Conversation = (props: ConversationProps) => {
           </button>
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-1">
             <span className="font-medium">Current Chat: {selectedChatId}</span>
+                    {isGroup &&     <ChatMembers chatId={Number(selectedChatId)} />}
+
             <span className="text-muted-foreground">Chatting with: {selectedUserName}</span>
           </div>
         </div>

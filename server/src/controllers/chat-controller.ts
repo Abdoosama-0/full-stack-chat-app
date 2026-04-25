@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { getIO} from "../socket"; // حسب setup عندك
 
 const prisma = new PrismaClient();
 interface JwtPayload {
@@ -382,13 +383,8 @@ export const createGroupChat = async (req: AuthRequest, res: Response) => {
 
     const { usernames, name } = req.body;
 
-    // ✅ validation
-    if (!Array.isArray(usernames) || usernames.length === 0) {
-      return res.status(400).json({ message: "Usernames required" });
-    }
-
-    if (!name || name.trim().length === 0) {
-      return res.status(400).json({ message: "Group name is required" });
+    if (!name) {
+      return res.status(400).json({ message: "Group name required" });
     }
 
     // 1. get users
@@ -400,26 +396,15 @@ export const createGroupChat = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    if (users.length === 0) {
-      return res.status(404).json({ message: "No users found" });
-    }
-
-    // ⚠️ optional: تأكد إن كل اليوزرز موجودين
-    if (users.length !== usernames.length) {
-      return res.status(400).json({
-        message: "Some usernames are invalid",
-      });
-    }
-
-    // 2. create group chat
+    // 2. create chat
     const chat = await prisma.chat.create({
       data: {
-        name: name.trim(),
-        isGroup: true, // 👈 مهم
+        name,
+        isGroup: true,
       },
     });
 
-    // 3. add members (creator = admin)
+    // 3. create members (بدون username هنا)
     const membersData = [
       {
         chatId: chat.id,
@@ -438,9 +423,155 @@ export const createGroupChat = async (req: AuthRequest, res: Response) => {
       skipDuplicates: true,
     });
 
+    // 4. reload full chat
+    const fullChat = await prisma.chat.findUnique({
+      where: { id: chat.id },
+      include: {
+        members: {
+          include: {
+            user: true,
+          },
+        },
+        messages: {
+          orderBy: { createdAt: "desc" },
+          take: 1,
+          include: {
+            sender: {
+              select: { username: true },
+            },
+          },
+        },
+      },
+    });
+
+    if (!fullChat) {
+      return res.status(500).json({ message: "Failed to load chat" });
+    }
+
+    // 5. socket payload
+    const payload = {
+      id: fullChat.id,
+      isGroup: true,
+      name: fullChat.name,
+      members: fullChat.members.map((m) => ({
+        userId: m.userId,
+        username: m.user.username,
+        avatar: m.user.avatar,
+      })),
+      messages: fullChat.messages.map((msg) => ({
+        content: msg.content,
+        createdAt: msg.createdAt,
+        sender: {
+          username: msg.sender.username,
+        },
+      })),
+    };
+
+    const io = getIO();
+
+    // 🔥 هنا الصح: نستخدم usernames الحقيقيين
+    const allUsernames = [
+      fullChat.members.find(m => m.userId === creatorId)?.user.username,
+      ...users.map(u => u.username),
+    ];
+
+    for (const username of allUsernames) {
+      if (!username) continue;
+
+      io.to(`user:${username}`).emit("new-chat", payload);
+    }
+
     return res.status(201).json({
       message: "Group chat created successfully",
       chatId: chat.id,
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+//=====================view group mempers===============
+export const getGroupMembers = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const chatId = Number(req.params.chatId);
+    console.log("Fetching members for chat ID:", chatId, "by user ID:", userId);
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    if (isNaN(chatId)) {
+      return res.status(400).json({ message: "Invalid chat id" });
+    }
+
+    // 1. check if user is member in this chat
+    const membership = await prisma.chatMember.findUnique({
+      where: {
+        chatId_userId: {
+          chatId,
+          userId,
+        },
+      },
+    });
+
+    if (!membership) {
+      return res.status(403).json({
+        message: "You are not a member of this group",
+      });
+    }
+
+    // 2. check if chat is group
+    const chat = await prisma.chat.findUnique({
+      where: { id: chatId },
+      select: {
+        id: true,
+        name: true,
+        isGroup: true,
+      },
+    });
+
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found" });
+    }
+
+    if (!chat.isGroup) {
+      return res.status(400).json({
+        message: "This chat is not a group",
+      });
+    }
+
+    // 3. get members
+    const members = await prisma.chatMember.findMany({
+      where: {
+        chatId,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            avatar: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    // 4. format response
+    const formattedMembers = members.map((m) => ({
+      userId: m.userId,
+      username: m.user.username,
+      avatar: m.user.avatar,
+      email: m.user.email,
+      isAdmin: m.isAdmin,
+    }));
+
+    return res.status(200).json({
+      chatId,
+      groupName: chat.name,
+      members: formattedMembers,
     });
   } catch (error) {
     console.error(error);
@@ -448,28 +579,29 @@ export const createGroupChat = async (req: AuthRequest, res: Response) => {
   }
 };
 //==================add member to group chat======================
-export const addUserToGroup = async (req: Request, res: Response) => {
-  try {
-    const { chatId, username } = req.body;
+// export const addUserToGroup = async (req: Request, res: Response) => {
+//   try {
+//     const { chatId, username } = req.body;
 
-    const user = await prisma.user.findUnique({
-      where: { username },
-    });
+//     const user = await prisma.user.findUnique({
+//       where: { username },
+//     });
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+//     if (!user) {
+//       return res.status(404).json({ message: "User not found" });
+//     }
 
-    await prisma.chatMember.create({
-      data: {
-        chatId,
-        userId: user.id,
-        isAdmin: false,
-      },
-    });
+//     await prisma.chatMember.create({
+//       data: {
+//         chatId,
+//         userId: user.id,
+//         isAdmin: false,
+//       },
+//     });
 
-    return res.json({ message: "User added successfully" });
-  } catch (error) {
-    return res.status(500).json({ message: "Server error" });
-  }
-};
+//     return res.json({ message: "User added successfully" });
+//   } catch (error) {
+//     return res.status(500).json({ message: "Server error" });
+//   }
+// };
+

@@ -4,6 +4,9 @@ import jwt from "jsonwebtoken";
 
 const prisma = new PrismaClient();
 
+// 🔥 global io instance
+let ioInstance: Server;
+
 const serialize = (obj: any) => {
   return JSON.parse(
     JSON.stringify(obj, (_, value) =>
@@ -23,6 +26,9 @@ export const initSocket = (httpServer: any) => {
   const io = new Server(httpServer, {
     cors: { origin: "*" },
   });
+
+  // 👇 حفظ الـ io للاستخدام في controllers
+  ioInstance = io;
 
   // ================= JWT Middleware =================
   io.use((socket, next) => {
@@ -52,163 +58,133 @@ export const initSocket = (httpServer: any) => {
     console.log("🟢 Connected:", username);
 
     // ================= SEND MESSAGE =================
-    socket.on(
-      "send-message",
-      async (data: { toUsername: string; content: string }) => {
-        try {
-          const { toUsername, content } = data;
+  socket.on(
+  "send-message",
+  async (data: {
+    type: "private" | "group";
+    chatId?: number;
+    toUsername?: string;
+    content: string;
+  }) => {
+    try {
+      const { type, chatId, toUsername, content } = data;
 
-          if (!content || !toUsername) return;
+      if (!content) return;
 
-          const receiver = await prisma.user.findUnique({
-            where: { username: toUsername },
-          });
+      // =========================
+      // 1️⃣ PRIVATE CHAT
+      // =========================
+      if (type === "private") {
+        if (!toUsername) return;
 
-          if (!receiver) {
-            return socket.emit("error", { message: "User not found" });
-          }
+        const receiver = await prisma.user.findUnique({
+          where: { username: toUsername },
+        });
 
-          // find or create chat
-          let chat = await prisma.chat.findFirst({
-            where: {
-              AND: [
-                { members: { some: { userId: fromUser.userId } } },
-                { members: { some: { userId: receiver.id } } },
-              ],
-            },
-          });
-
-          let isNewChat = false;
-
-          if (!chat) {
-            chat = await prisma.chat.create({
-              data: {
-                members: {
-                  create: [
-                    { userId: fromUser.userId },
-                    { userId: receiver.id },
-                  ],
-                },
-              },
-            });
-
-            isNewChat = true;
-          }
-
-          const message = await prisma.message.create({
-            data: {
-              chatId: chat.id,
-              senderId: fromUser.userId,
-              content,
-            },
-          });
-
-          await prisma.chatMember.updateMany({
-            where: {
-              chatId: chat.id,
-              hidden: true,
-            },
-            data: {
-              hidden: false,
-            },
-          });
-
-          const messagePayload = {
-            chatId: chat.id,
-            from: username,
-            content,
-            createdAt: message.createdAt,
-          };
-
-          io.to(`user:${toUsername}`).emit("new-message", messagePayload);
-          io.to(`user:${username}`).emit("new-message", messagePayload);
-
-          // إعادة جلب الشات بشكل كامل
-          const chatData = await prisma.chat.findUnique({
-            where: { id: chat.id },
-            include: {
-              members: {
-                include: {
-                  user: {
-                    select: {
-                      id: true,
-                      username: true,
-                      avatar: true,
-                    },
-                  },
-                },
-              },
-              messages: {
-                orderBy: { createdAt: "desc" },
-                take: 1,
-                include: {
-                  sender: {
-                    select: { username: true },
-                  },
-                },
-              },
-            },
-          });
-
-          if (!chatData) return;
-
-          // تحديد الطرف الآخر
-          const otherMember = chatData.members.find(
-            (m) => m.userId !== fromUser.userId
-          );
-
-          const otherUser = otherMember
-            ? {
-                id: otherMember.user.id.toString(),
-                username: otherMember.user.username,
-                avatar: otherMember.user.avatar,
-              }
-            : null;
-
-          const payloadChatData = {
-            id: chatData.id.toString(),
-            otherUser,
-            members: chatData.members.map((m) => ({
-              userId: m.userId.toString(),
-              username: m.user.username,
-              avatar: m.user.avatar,
-            })),
-            messages: chatData.messages.map((msg) => ({
-              id: msg.id.toString(),
-              chatId: msg.chatId.toString(),
-              senderId: msg.senderId.toString(),
-              content: msg.content,
-              createdAt: msg.createdAt,
-              sender: {
-                username: msg.sender.username,
-              },
-            })),
-          };
-
-          if (isNewChat) {
-            io.to(`user:${toUsername}`).emit(
-              "new-chat",
-              serialize(payloadChatData)
-            );
-            io.to(`user:${username}`).emit(
-              "new-chat",
-              serialize(payloadChatData)
-            );
-          } else {
-            io.to(`user:${toUsername}`).emit(
-              "chat-updated",
-              serialize(payloadChatData)
-            );
-            io.to(`user:${username}`).emit(
-              "chat-updated",
-              serialize(payloadChatData)
-            );
-          }
-        } catch (error) {
-          console.error("Socket error:", error);
+        if (!receiver) {
+          return socket.emit("error", { message: "User not found" });
         }
+
+        let chat = await prisma.chat.findFirst({
+          where: {
+            AND: [
+              { members: { some: { userId: fromUser.userId } } },
+              { members: { some: { userId: receiver.id } } },
+            ],
+          },
+        });
+
+        let isNewChat = false;
+
+        if (!chat) {
+          chat = await prisma.chat.create({
+            data: {
+              members: {
+                create: [
+                  { userId: fromUser.userId },
+                  { userId: receiver.id },
+                ],
+              },
+            },
+          });
+
+          isNewChat = true;
+        }
+
+        const message = await prisma.message.create({
+          data: {
+            chatId: chat.id,
+            senderId: fromUser.userId,
+            content,
+          },
+        });
+
+        const payload = {
+          chatId: chat.id,
+          from: fromUser.username,
+          content,
+          createdAt: message.createdAt,
+        };
+
+        io.to(`user:${receiver.username}`).emit("new-message", payload);
+        io.to(`user:${fromUser.username}`).emit("new-message", payload);
+
+        return;
       }
-    );
+
+      // =========================
+      // 2️⃣ GROUP CHAT
+      // =========================
+      if (type === "group") {
+console.log("GROUP MESSAGE RECEIVED", { chatId, content });
+
+        if (!chatId) return;
+console.log("GROUP MESSAGE RECEIVED", { chatId, content });
+        const chat = await prisma.chat.findUnique({
+          where: { id: chatId },
+          include: {
+            members: {
+              include: {
+                user: true,
+              },
+            },
+          },
+        });
+
+        if (!chat) return;
+
+        // save message
+        const message = await prisma.message.create({
+          data: {
+            chatId,
+            senderId: fromUser.userId,
+            content,
+          },
+        });
+
+        const payload = {
+          chatId,
+          from: fromUser.username,
+          content,
+          createdAt: message.createdAt,
+          isGroup: true,
+        };
+
+        // 🔥 ابعت لكل أعضاء الجروب
+        for (const member of chat.members) {
+          io.to(`user:${member.user.username}`).emit(
+            "new-message",
+            payload
+          );
+        }
+
+        return;
+      }
+    } catch (error) {
+      console.error("Socket error:", error);
+    }
+  }
+);
 
     // ================= DISCONNECT =================
     socket.on("disconnect", () => {
@@ -217,4 +193,12 @@ export const initSocket = (httpServer: any) => {
   });
 
   return io;
+};
+
+// 🔥 تستخدمها في controllers
+export const getIO = () => {
+  if (!ioInstance) {
+    throw new Error("Socket not initialized");
+  }
+  return ioInstance;
 };
