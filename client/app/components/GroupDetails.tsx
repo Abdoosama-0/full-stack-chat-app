@@ -23,6 +23,7 @@ type GroupData = {
 const GroupDetails = () => {
   const [clicked, setClicked] = useState(false);
   const [group, setGroup] = useState<GroupData | null>(null);
+const [isAdmin, setIsAdmin] = useState(false);
 
   const { selectedChatId } = useChatStore();
   const { token } = useUserData();
@@ -43,6 +44,7 @@ const GroupDetails = () => {
 
       const data = await res.json();
       setGroup(data);
+      setIsAdmin(data.isCurrentUserAdmin)
     } catch (err) {
       console.error("Error fetching chat:", err);
     }
@@ -72,7 +74,7 @@ const GroupDetails = () => {
 
             {/* ===== GROUP PHOTO ===== */}
             <div className="flex justify-center">
-                <div className="border">
+                <div className="">
 
 
         
@@ -82,8 +84,10 @@ const GroupDetails = () => {
                   "https://static.vecteezy.com/system/resources/previews/026/019/617/non_2x/group-profile-avatar-icon-default-social-media-forum-profile-photo-vector.jpg"
                 }
                 className="h-20 w-20 rounded-full object-cover border"
-              />             <EditGroupPhoto chatId={Number(selectedChatId) || 0} />
-
+              />             
+              {isAdmin && (
+                <EditGroupPhoto chatId={Number(selectedChatId) || 0} />
+              )}
                      </div>
             </div>
 

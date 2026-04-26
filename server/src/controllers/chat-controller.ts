@@ -427,6 +427,10 @@ export const getChat = async (req: AuthRequest, res: Response) => {
     if (!chat) {
       return res.status(404).json({ message: "Chat not found" });
     }
+    const isCurrentUserAdmin =
+  chat.members?.some(
+    (m) => m.userId === userId && m.isAdmin === true
+  ) || false;
 
     const safeJson = (data: any) =>
   JSON.parse(
@@ -434,7 +438,7 @@ export const getChat = async (req: AuthRequest, res: Response) => {
       typeof value === "bigint" ? value.toString() : value
     )
   );
-return res.status(200).json(safeJson(chat));
+return res.status(200).json(safeJson({ ...chat, isCurrentUserAdmin }));
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
