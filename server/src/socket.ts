@@ -58,7 +58,7 @@ export const initSocket = (httpServer: any) => {
     console.log("🟢 Connected:", username);
 
     // ================= SEND MESSAGE =================
-  socket.on(
+socket.on(
   "send-message",
   async (data: {
     type: "private" | "group";
@@ -94,8 +94,6 @@ export const initSocket = (httpServer: any) => {
           },
         });
 
-        let isNewChat = false;
-
         if (!chat) {
           chat = await prisma.chat.create({
             data: {
@@ -107,10 +105,11 @@ export const initSocket = (httpServer: any) => {
               },
             },
           });
-
-          isNewChat = true;
         }
 
+        // =========================
+        // CREATE MESSAGE
+        // =========================
         const message = await prisma.message.create({
           data: {
             chatId: chat.id,
@@ -118,26 +117,58 @@ export const initSocket = (httpServer: any) => {
             content,
           },
         });
-                     await prisma.chat.update({
-  where: { id: chat.id },
-  data: {
-    lastMessageId: message.id,
-  },
+
+        console.log("Message created:", message.id);
+
+        // =========================
+        // UPDATE LAST MESSAGE
+        // =========================
+        await prisma.chat.update({
+          where: { id: chat.id },
+          data: {
+            lastMessageId: Number(message.id) ,
+          },
+        });
+
+        // =========================
+        // AUTO MARK AS SEEN (FOR SENDER)
+        // =========================
+        await prisma.chatMember.update({
+          where: {
+            chatId_userId: {
+              chatId: chat.id,
+              userId: fromUser.userId,
+            },
+          },
+          data: {
+            lastSeenMessageId: message.id,
+          },
+        });
+         console.log(" lastSeenMessageId:", message.id ,"for user:", fromUser.username);
+        console.log("lastMessage:",Number(message.id) ,"for chat:", chat.id);
+        // =========================
+// 🔥 EMIT SEEN UPDATE
+// =========================
+io.to(`user:${fromUser.username}`).emit("chat-seen-updated", {
+  chatId: Number(chat.id),
+  lastSeenMessageId: Number(message.id),
 });
 
-console.log('lastMessageId updated for chat:', chat.id, 'with messageId:', message.id);
-
-   const payload = {
-  chatId: chat.id,
-  from: fromUser.username,
-  content,
-  createdAt: message.createdAt,
-};
+        // =========================
+        // SOCKET PAYLOAD
+        // =========================
+        const payload = {
+          chatId: chat.id,
+          from: fromUser.username,
+          content,
+          createdAt: message.createdAt,
+        };
 
         io.to(`user:${receiver.username}`).emit("new-message", payload);
         io.to(`user:${fromUser.username}`).emit("new-message", payload);
-   const chatUpdate = {
-  chatId: chat.id,
+
+const chatUpdate = {
+  chatId: Number(chat.id),
   lastMessage: {
     id: Number(message.id),
     content: message.content,
@@ -146,17 +177,16 @@ console.log('lastMessageId updated for chat:', chat.id, 'with messageId:', messa
   },
 };
 
-
-io.to(`user:${receiver.username}`).emit("chat-updated", chatUpdate);
-io.to(`user:${fromUser.username}`).emit("chat-updated", chatUpdate);
+        io.to(`user:${receiver.username}`).emit("chat-updated", chatUpdate);
+        io.to(`user:${fromUser.username}`).emit("chat-updated", chatUpdate);
 
         return;
       }
 
-      // =========================
-      // 2️⃣ GROUP CHAT
-      // =========================
-  if (type === "group") {
+   // =========================
+// 2️⃣ GROUP CHAT
+// =========================
+if (type === "group") {
   if (!chatId) return;
 
   const chat = await prisma.chat.findUnique({
@@ -170,7 +200,9 @@ io.to(`user:${fromUser.username}`).emit("chat-updated", chatUpdate);
 
   if (!chat) return;
 
-  // 1️⃣ save message
+  // =========================
+  // CREATE MESSAGE
+  // =========================
   const message = await prisma.message.create({
     data: {
       chatId,
@@ -179,19 +211,53 @@ io.to(`user:${fromUser.username}`).emit("chat-updated", chatUpdate);
     },
   });
 
-  // 2️⃣ update last message
+  console.log("Group message created:", message.id);
+
+  // =========================
+  // UPDATE LAST MESSAGE
+  // =========================
   await prisma.chat.update({
     where: { id: chatId },
     data: {
-      lastMessageId: message.id,
+      lastMessageId: Number(message.id),
     },
   });
 
-  console.log("group lastMessage updated:", chatId, message.id);
+  // =========================
+  // AUTO MARK AS SEEN (FOR SENDER ONLY)
+  // =========================
+  await prisma.chatMember.update({
+    where: {
+      chatId_userId: {
+        chatId,
+        userId: fromUser.userId,
+      },
+    },
+    data: {
+      lastSeenMessageId: message.id,
+    },
+  });
 
-  // 3️⃣ payload for chat list update
+  console.log(
+    "lastSeenMessageId:",
+    message.id,
+    "for user:",
+    fromUser.username
+  );
+
+  // =========================
+  // 🔥 EMIT SEEN UPDATE (FOR SENDER ONLY)
+  // =========================
+  io.to(`user:${fromUser.username}`).emit("chat-seen-updated", {
+    chatId: Number(chatId),
+    lastSeenMessageId: Number(message.id),
+  });
+
+  // =========================
+  // SOCKET PAYLOADS
+  // =========================
   const chatUpdate = {
-    chatId,
+    chatId: Number(chatId),
     lastMessage: {
       id: Number(message.id),
       content: message.content,
@@ -200,19 +266,27 @@ io.to(`user:${fromUser.username}`).emit("chat-updated", chatUpdate);
     },
   };
 
-  // 4️⃣ send message realtime (chat screen)
   const messagePayload = {
-    chatId,
+    chatId: Number(chatId),
     from: fromUser.username,
-    content,
+    content: message.content,
     createdAt: message.createdAt,
     isGroup: true,
   };
 
-  // 5️⃣ emit to all members
+  // =========================
+  // EMIT TO ALL MEMBERS
+  // =========================
   for (const member of chat.members) {
-    io.to(`user:${member.user.username}`).emit("new-message", messagePayload);
-    io.to(`user:${member.user.username}`).emit("chat-updated", chatUpdate);
+    io.to(`user:${member.user.username}`).emit(
+      "new-message",
+      messagePayload
+    );
+
+    io.to(`user:${member.user.username}`).emit(
+      "chat-updated",
+      chatUpdate
+    );
   }
 
   return;
@@ -229,7 +303,6 @@ socket.on("mark-chat-seen", async ({ chatId }) => {
   try {
     const userId = fromUser.userId;
 
-    // هات آخر رسالة في الشات
     const lastMessage = await prisma.message.findFirst({
       where: { chatId },
       orderBy: { createdAt: "desc" },
@@ -237,9 +310,10 @@ socket.on("mark-chat-seen", async ({ chatId }) => {
 
     if (!lastMessage) return;
 
-    // متحدثش لو آخر رسالة أنا اللي بعتها
-    if (lastMessage.senderId === userId) return;
+    // 🔥 شيل الشرط ده خالص
+    // if (lastMessage.senderId === userId) return;
 
+    // ✅ حدث دايمًا
     await prisma.chatMember.update({
       where: {
         chatId_userId: {
@@ -250,6 +324,12 @@ socket.on("mark-chat-seen", async ({ chatId }) => {
       data: {
         lastSeenMessageId: lastMessage.id,
       },
+    });
+
+    // 🔥 ابعت تحديث للفرونت
+    io.to(`user:${fromUser.username}`).emit("chat-seen-updated", {
+      chatId: Number(chatId),
+      lastSeenMessageId: Number(lastMessage.id),
     });
 
     console.log("seen updated:", chatId, userId, lastMessage.id);

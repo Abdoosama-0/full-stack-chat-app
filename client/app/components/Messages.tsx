@@ -8,7 +8,7 @@ import { HiOutlinePaperAirplane } from "react-icons/hi2";
 
 interface MessagesProps {
   chatId: string | null;
-  userName: string | null; // private chat peer username
+  userName: string | null;
   userId: number | null;
   avatar: string | null;
 }
@@ -16,29 +16,22 @@ interface MessagesProps {
 interface Message {
   id?: string | number;
   content: string;
-  sender: string; // 👈 مهم: sender الحقيقي
+  sender: string;
   createdAt: string;
 }
 
 const Messages = ({ chatId, userName }: MessagesProps) => {
   const socket = useSocket();
   const { token, userName: myUsername } = useUserData();
-
   const isGroup = useChatStore((state) => state.isGroup);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-//===========emit("mark-chat-seen"==================
-  useEffect(() => {
-  if (!socket || !chatId) return;
-alert("mark-chat-seen emitted with chatId: " + chatId);
-  socket.emit("mark-chat-seen", {
-    chatId: Number(chatId),
-  });
-}, [chatId, socket]);
-  // ================= FETCH HISTORY =================
+  const [lastSeenMessageId, setLastSeenMessageId] = useState<string | null>(null);
+
+  // ================= FETCH CHAT HISTORY =================
   const fetchChatHistory = async (chatId: number) => {
     try {
       setLoading(true);
@@ -68,6 +61,8 @@ alert("mark-chat-seen emitted with chatId: " + chatId);
       }));
 
       setMessages(formatted);
+      setLastSeenMessageId(data.lastSeenMessageId);
+
     } catch (err) {
       setErrorMessage("Error loading messages");
     } finally {
@@ -81,28 +76,48 @@ alert("mark-chat-seen emitted with chatId: " + chatId);
     }
   }, [chatId]);
 
+
+  //===========emit("mark-chat-seen"==================
+useEffect(() => {
+  if (!socket || !chatId) return;
+
+  socket.emit("mark-chat-seen", {
+    chatId: Number(chatId),
+  });
+}, [chatId, socket]);
   // ================= SOCKET =================
-  useEffect(() => {
-    if (!socket) return;
+useEffect(() => {
+  if (!socket || !chatId) return;
 
-    const handleNewMessage = (data: any) => {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now(),
-          content: data.content,
-          sender: data.from, // 👈 sender الحقيقي
-          createdAt: data.createdAt,
-        },
-      ]);
-    };
+  const handleNewMessage = (data: any) => {
+    // 1️⃣ ضيف الرسالة
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Date.now(),
+        content: data.content,
+        sender: data.from,
+        createdAt: data.createdAt,
+      },
+    ]);
 
-    socket.on("new-message", handleNewMessage);
+    // 2️⃣ 🔥 اعمل seen بشرطين
+    const isSameChat = Number(data.chatId) === Number(chatId);
+    const isFromMe = data.from === myUsername;
 
-    return () => {
-      socket.off("new-message", handleNewMessage);
-    };
-  }, [socket]);
+    if (isSameChat && !isFromMe) {
+      socket.emit("mark-chat-seen", {
+        chatId: Number(chatId),
+      });
+    }
+  };
+
+  socket.on("new-message", handleNewMessage);
+
+  return () => {
+    socket.off("new-message", handleNewMessage);
+  };
+}, [socket, chatId, myUsername]);
 
   // ================= SEND MESSAGE =================
   const sendMessage = () => {
@@ -149,7 +164,6 @@ alert("mark-chat-seen emitted with chatId: " + chatId);
                 isMe ? "items-end" : "items-start"
               }`}
             >
-              {/* 👇 اسم المرسل في الجروب فقط لو مش أنا */}
               {isGroup && !isMe && (
                 <span className="text-xs text-gray-500 mb-1">
                   {msg.sender}

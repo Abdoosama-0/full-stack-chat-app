@@ -18,8 +18,6 @@ export const getChatHistory = async (req: AuthRequest, res: Response) => {
 
     const userId = req.user.userId;
     const chatId = Number(req.params.chatId);
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 50;
 
     if (!chatId) {
       return res.status(400).json({ message: "chatId is required" });
@@ -38,13 +36,14 @@ export const getChatHistory = async (req: AuthRequest, res: Response) => {
     }
 
     const isMember = chat.members.some((m) => m.userId === userId);
+
     if (!isMember) {
       return res.status(403).json({
         message: "You are not a member of this chat",
       });
     }
 
-    // 2️⃣ get lastSeenMessageId for THIS user
+    // 2️⃣ get lastSeenMessageId
     const member = await prisma.chatMember.findUnique({
       where: {
         chatId_userId: {
@@ -54,12 +53,10 @@ export const getChatHistory = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    // 3️⃣ get ALL messages (no filtering)
+    // 3️⃣ get ALL messages (NO pagination)
     const messages = await prisma.message.findMany({
       where: { chatId },
-      orderBy: { createdAt: "asc" },
-      skip: (page - 1) * limit,
-      take: limit,
+      orderBy: { createdAt: "asc" }, // ترتيب طبيعي للشات
       include: {
         sender: {
           select: { username: true },
@@ -87,14 +84,13 @@ export const getChatHistory = async (req: AuthRequest, res: Response) => {
       lastSeenMessageId: member?.lastSeenMessageId
         ? member.lastSeenMessageId.toString()
         : null,
-      page,
-      limit,
     });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
   }
 };
+
 
 export const getUserChats = async (req: AuthRequest, res: Response) => {
   try {
@@ -128,7 +124,7 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
         },
         messages: {
           orderBy: { createdAt: "desc" },
-          take: 1, // آخر رسالة فقط
+          take: 1,
           include: {
             sender: {
               select: { username: true },
@@ -138,71 +134,119 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    const safeChats = chats.map((chat) => {
-      const isGroup = chat.isGroup;
-      const isPrivate = !chat.isGroup;
+    const safeChats = await Promise.all(
+      chats.map(async (chat) => {
+        const isGroup = chat.isGroup;
+        const isPrivate = !chat.isGroup;
 
-      let otherUser = null;
+        let otherUser = null;
 
-      // 💬 private chat
-      if (isPrivate) {
-        const otherMember = chat.members.find(
-          (m) => m.userId !== userId
-        );
+        if (isPrivate) {
+          const otherMember = chat.members.find(
+            (m) => m.userId !== userId
+          );
 
-        if (otherMember) {
-          otherUser = {
-            id: otherMember.user.id.toString(),
-            username: otherMember.user.username,
-            email: otherMember.user.email,
-            avatar: otherMember.user.avatar,
-          };
+          if (otherMember) {
+            otherUser = {
+              id: otherMember.user.id.toString(),
+              username: otherMember.user.username,
+              email: otherMember.user.email,
+              avatar: otherMember.user.avatar,
+            };
+          }
         }
-      }
 
-      return {
-  id: chat.id.toString(),
+        // =========================
+        // last message
+        // =========================
+        const lastMessage = chat.messages[0]
+          ? {
+              id: chat.messages[0].id.toString(),
+              content: chat.messages[0].content,
+              createdAt: chat.messages[0].createdAt,
+              sender: chat.messages[0].sender.username,
+              senderId: chat.messages[0].senderId,
+            }
+          : null;
 
-  isPrivate,
-  isGroup,
+        // =========================
+        // member state
+        // =========================
+        const member = await prisma.chatMember.findUnique({
+          where: {
+            chatId_userId: {
+              chatId: chat.id,
+              userId,
+            },
+          },
+          select: {
+            lastSeenMessageId: true,
+          },
+        });
 
-  ...(isGroup
-    ? {
-        name: chat.name,
-        members: chat.members.map((m) => ({
-          userId: m.userId.toString(),
-          username: m.user.username,
-          email: m.user.email,
-          avatar: m.user.avatar,
-        })),
-      }
-    : {
-        otherUser,
-      }),
+        let lastSeenMessageId = member?.lastSeenMessageId
+          ? member.lastSeenMessageId.toString()
+          : null;
 
-/* 🔥 الجديد */
-  lastMessage: chat.messages[0]
-    ? {
-        id: chat.messages[0].id.toString(),
-        content: chat.messages[0].content,
-        createdAt: chat.messages[0].createdAt,
-      }
-    : null,
+        // =========================
+        // 🔥 AUTO UPDATE IF I SENT LAST MESSAGE
+        // =========================
+        if (
+          lastMessage &&
+          lastMessage.senderId === userId
+        ) {
+          lastSeenMessageId = lastMessage.id;
 
-  /* ✔ كل الرسائل زي ما هي */
-  messages: chat.messages.map((msg) => ({
-    id: msg.id.toString(),
-    chatId: msg.chatId.toString(),
-    senderId: msg.senderId.toString(),
-    content: msg.content,
-    type: msg.type,
-    createdAt: msg.createdAt,
-    sender: {
-      username: msg.sender.username,
-    },
-  })),
-};
-    });
+          // update DB
+          await prisma.chatMember.update({
+            where: {
+              chatId_userId: {
+                chatId: chat.id,
+                userId,
+              },
+            },
+            data: {
+              lastSeenMessageId: Number(lastMessage.id),
+            },
+          });
+        }
+
+        // =========================
+        // isUpToDate
+        // =========================
+        let isUpToDate = false;
+
+        if (lastMessage && lastSeenMessageId) {
+          isUpToDate =
+            Number(lastSeenMessageId) >= Number(lastMessage.id);
+        }
+
+        return {
+          id: chat.id.toString(),
+
+          isPrivate,
+          isGroup,
+
+          ...(isGroup
+            ? {
+                name: chat.name,
+                members: chat.members.map((m) => ({
+                  userId: m.userId.toString(),
+                  username: m.user.username,
+                  email: m.user.email,
+                  avatar: m.user.avatar,
+                })),
+              }
+            : {
+                otherUser,
+              }),
+
+          lastMessage,
+          lastSeenMessageId,
+          isUpToDate,
+        };
+      })
+    );
 
     return res.json({ chats: safeChats });
   } catch (error) {
@@ -210,7 +254,6 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
-
 
 export const getChatData = async (req: AuthRequest, res: Response) => {
   try {

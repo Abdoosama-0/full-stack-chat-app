@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState } from "react";
 import { useSocket } from "../provider/SocketProvider";
 import { useUserData } from "../store/userData";
@@ -13,30 +15,37 @@ type Message = {
 };
 
 type Chat = {
+  lastSeenMessageId: any;
   lastMessage: any;
   name: any;
   isGroup: any;
   id: number;
+
+  isUpToDate?: boolean; // 👈 الجديد
+
   isPrivate?: boolean;
   otherUser?: {
     id?: number;
     username: string;
     avatar?: string;
   } | null;
+
   members?: {
     userId: number;
     username: string;
     avatar?: string;
   }[];
+
   messages?: Message[];
 };
 
 const ChatList = () => {
-    const [preview, setPreview] = useState<string | null>(null);
-  
-    const previewPhoto = (url: string | undefined) => {
-      setPreview(url? url : null);
-    };
+  const [preview, setPreview] = useState<string | null>(null);
+const { selectedChatId } = useChatStore();
+  const previewPhoto = (url: string | undefined) => {
+    setPreview(url ? url : null);
+  };
+
   const socket = useSocket();
   const { token } = useUserData();
 
@@ -88,27 +97,28 @@ const ChatList = () => {
   }, [token]);
 
   // ================= SOCKET =================
- useEffect(() => {
+useEffect(() => {
   if (!socket) return;
 
+  // ================= CHAT UPDATED =================
   const handleUpdate = (data: any) => {
+    setChats((prev) => {
+      const updated = prev.map((chat) => {
+        if (Number(chat.id) === Number(data.chatId)) {
+          return {
+            ...chat,
+            lastMessage: {
+              ...data.lastMessage,
+              id: String(data.lastMessage.id),
+            },
+            lastSeenMessageId: data.lastSeenMessageId
+              ? String(data.lastSeenMessageId)
+              : chat.lastSeenMessageId,
+          };
+        }
+        return chat;
+      });
 
-
- setChats((prev) => {
-    const updated = prev.map((chat) => {
-
-     if (Number(chat.id) === Number(data.chatId)) {
-
-
-        return {
-          ...chat,
-          lastMessage: data.lastMessage,
-        };
-      }
-
-      return chat;
-    });
-      // يخلي الشات يطلع فوق
       const moved = updated.find((c) => c.id === data.chatId);
       const rest = updated.filter((c) => c.id !== data.chatId);
 
@@ -116,11 +126,49 @@ const ChatList = () => {
     });
   };
 
+  // ================= CHAT SEEN UPDATED =================
+  const handleSeenUpdate = (data: any) => {
+    setChats((prev) =>
+      prev.map((chat) => {
+        if (Number(chat.id) === Number(data.chatId)) {
+          return {
+            ...chat,
+            lastSeenMessageId: String(data.lastSeenMessageId),
+          };
+        }
+        return chat;
+      })
+    );
+  };
   socket.on("chat-updated", handleUpdate);
+  socket.on("chat-seen-updated", handleSeenUpdate);
+// ================= CHAT SEEN UPDATED =================
+
+ const handleSeenUpdate2 = (data: any) => {
+    setChats((prev) =>
+      prev.map((chat) => {
+        if (Number(chat.id) === Number(data.chatId)) {
+          return {
+            ...chat,
+            lastSeenMessageId: data.lastSeenMessageId,
+          };
+        }
+        return chat;
+      })
+    );
+  };
+
+  socket.on("chat-seen-updated", handleSeenUpdate2);
+
 
   return () => {
     socket.off("chat-updated", handleUpdate);
+    socket.off("chat-seen-updated", handleSeenUpdate);
+        socket.off("chat-seen-updated", handleSeenUpdate);
+
   };
+
+  
 }, [socket]);
 
   // ================= HELPER =================
@@ -148,6 +196,7 @@ const ChatList = () => {
           Loading...
         </p>
       )}
+
       {error && (
         <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {error}
@@ -161,86 +210,90 @@ const ChatList = () => {
       )}
 
       <div className="space-y-2">
-   {chats.map((chat) => {
-  const lastMessage = chat.lastMessage ||chat.lastMessage.content;
+        {chats.map((chat) => {
+          const lastMessage = chat.lastMessage;
 
-  const user = chat.isGroup ? null : getChatUser(chat);
+          const user = chat.isGroup ? null : getChatUser(chat);
 
-  const displayName = chat.isGroup
-    ? chat.name
-    : user?.username || "Unknown";
+          const displayName = chat.isGroup
+            ? chat.name
+            : user?.username || "Unknown";
 
-  const displayAvatar = chat.isGroup ? null : user?.avatar;
+          const displayAvatar = chat.isGroup ? null : user?.avatar;
 
-  return (
-    <div
-      key={chat.id}
-     onClick={() => {
-  setSelectedChatId(String(chat.id));
-  setIsGroup(!!chat.isGroup); // 🔥 هنا الإضافة
+          return (
+            <div
+              key={chat.id}
+              onClick={() => {
+                setSelectedChatId(String(chat.id));
+                setIsGroup(!!chat.isGroup);
 
-  if (!chat.isGroup) {
-    setSelectedUserId(user?.id ?? null);
-    setSelectedUserName(user?.username ?? null);
-    setSelectedUserAvatar(user?.avatar ?? null);
-  } else {
-    setSelectedUserId(null);
-    setSelectedUserName(chat.name ?? null);
-    setSelectedUserAvatar(null);
-  }
-}}
-      className="group flex cursor-pointer items-start gap-3 rounded-2xl border border-border/75 bg-card/90 p-3 shadow-sm transition hover:border-primary/35 hover:bg-accent/30 hover:shadow-md"
-    >
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          if (displayAvatar) previewPhoto(displayAvatar);
-        }}
-        className="mt-0.5 flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-muted/70 transition group-hover:border-primary/40"
-      >
-        {chat.isGroup ? (
-          <div className="flex h-full w-full items-center justify-center text-sm font-bold text-muted-foreground">
-            {chat.name?.charAt(0).toUpperCase()}
-          </div>
-        ) : (
-          displayAvatar && (
-            <img
-              src={displayAvatar}
-              alt="avatar"
-              className="h-full w-full cursor-zoom-in object-cover"
-            />
-          )
-        )}
+                if (!chat.isGroup) {
+                  setSelectedUserId(user?.id ?? null);
+                  setSelectedUserName(user?.username ?? null);
+                  setSelectedUserAvatar(user?.avatar ?? null);
+                } else {
+                  setSelectedUserId(null);
+                  setSelectedUserName(chat.name ?? null);
+                  setSelectedUserAvatar(null);
+                }
+              }}
+         className={`group flex cursor-pointer items-start gap-3 rounded-2xl border p-3 shadow-sm transition hover:border-primary/35 hover:shadow-md
+${
+  
+  Number(chat.lastMessage?.id) === Number(chat.lastSeenMessageId)
+    ? "border-border/75 bg-card/90"
+    : "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+}`}
+            >
+              {/* Avatar */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (displayAvatar) previewPhoto(displayAvatar);
+                }}
+                className="mt-0.5 flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-muted/70"
+              >
+                {chat.isGroup ? (
+                  <div className="flex h-full w-full items-center justify-center text-sm font-bold text-muted-foreground">
+                    {chat.name?.charAt(0).toUpperCase()}
+                  </div>
+                ) : (
+                  displayAvatar && (
+                    <img
+                      src={displayAvatar}
+                      alt="avatar"
+                      className="h-full w-full object-cover"
+                    />
+                  )
+                )}
 
-        <ImagePreview
-          imageUrl={preview}
-          onClose={() => setPreview(null)}
-        />
-      </button>
+                <ImagePreview
+                  imageUrl={preview}
+                  onClose={() => setPreview(null)}
+                />
+              </button>
 
-      <div className="min-w-0 flex-1 space-y-1">
-        <p className="truncate text-sm font-semibold text-foreground">
-          {displayName}
-        </p>
+              {/* Content */}
+              <div className="min-w-0 flex-1 space-y-1">
+                <p className="truncate text-sm font-semibold text-foreground">
+                  {displayName}
+                </p>
 
-        <p className="line-clamp-2 text-sm text-muted-foreground">
-          {lastMessage?.content || "No messages yet"}
-        </p>
+                <p className="line-clamp-2 text-sm text-muted-foreground">
+                  {lastMessage?.content || "No messages yet"}
+                </p>
+              </div>
+
+              {/* Menu */}
+              <div onClick={(e) => e.stopPropagation()}>
+                <ChatMenu chatId={chat.id} />
+              </div>
+            </div>
+          );
+        })}
       </div>
-
-      <div
-        onClick={(e) => e.stopPropagation()}
-        className="shrink-0"
-      >
-        <ChatMenu chatId={chat.id} />
-      </div>
-    </div>
-  );
-})}
-      </div>
-
-   
     </div>
   );
 };
