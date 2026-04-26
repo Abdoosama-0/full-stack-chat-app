@@ -5,11 +5,15 @@ import Messages from './Messages';
 import { HiOutlineChatBubbleLeftRight } from 'react-icons/hi2';
 import ImagePreview from './ImagePreview';
 import ChatMembers from './ChatMembers';
+import EditGroupPhoto from './edit/EditGroupPhoto';
+import { useSocket } from "../provider/SocketProvider";
+import GroupDetails from './GroupDetails';
 
 interface ConversationProps {
   chatId: number;
 }
 const Conversation = (props: ConversationProps) => {
+  const socket = useSocket();
 
   const [preview, setPreview] = useState<string | null>(null);
 
@@ -69,19 +73,31 @@ const Conversation = (props: ConversationProps) => {
             className="group flex size-10 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-muted/70 transition hover:border-primary/40"
           >
 
-            {selectedUserAvatar&& (
+            { selectedUserAvatar&& (
+              <div>
               <img
                 src={selectedUserAvatar}
                 alt="avatar"
                 className="h-full w-full cursor-zoom-in object-cover"
               />
+                           
+
+              </div>
             ) }
+  
              <ImagePreview
           imageUrl={preview}
           onClose={() => setPreview(null)}
         />
+  
           </button>
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-1">
+            {isGroup &&  
+            <GroupDetails />
+            // <EditGroupPhoto  chatId={Number(selectedChatId)} />
+            
+            }
+                 
             <span className="font-medium">Current Chat: {selectedChatId}</span>
                     {isGroup &&     <ChatMembers chatId={Number(selectedChatId)} />}
 
@@ -90,6 +106,7 @@ const Conversation = (props: ConversationProps) => {
         </div>
        
         <Messages chatId={selectedChatId} userName={selectedUserName} userId={selectedUserId} avatar={""} />
+        
       </div>
     );
   } else {

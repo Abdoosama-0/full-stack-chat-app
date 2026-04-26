@@ -34,14 +34,16 @@ model User {
 // CHATS
 //////////////////////
 model Chat {
-  id        Int      @id @default(autoincrement())
-  name      String?  
-  isGroup   Boolean  @default(false) // 👈 جديد
-  createdAt DateTime @default(now())
-  lastMessageId BigInt? 
+  id             Int      @id @default(autoincrement())
+  name           String?
+  isGroup        Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  lastMessageId  BigInt?
 
-  members   ChatMember[]
-  messages  Message[]
+  chatPhoto      String?   // 👈 الجديد (للجروبات فقط)
+
+  members        ChatMember[]
+  messages       Message[]
 }
 //////////////////////
 // CHAT MEMBERS

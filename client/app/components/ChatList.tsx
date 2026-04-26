@@ -15,6 +15,7 @@ type Message = {
 };
 
 type Chat = {
+  chatPhoto: any;
   lastSeenMessageId: any;
   lastMessage: any;
   name: any;
@@ -97,9 +98,37 @@ const { selectedChatId } = useChatStore();
   }, [token]);
 
   // ================= SOCKET =================
+  const handleNewChat = (data: any) => {
+  setChats((prev) => {
+    const exists = prev.some((c) => c.id === data.id);
+    if (exists) return prev;
+
+    return [data, ...prev];
+  });
+};
+
+socket?.on("new-chat", handleNewChat);
+//============useEffect socit==================
 useEffect(() => {
   if (!socket) return;
 
+
+  //======================   handleNewChat 
+  const handleNewChat = (data: any) => {
+  setChats((prev) => {
+    const exists = prev.some((c) => c.id === data.id);
+    if (exists) return prev;
+
+    return [
+      {
+        ...data,
+        lastMessage: data.messages?.[0] || null,
+      },
+      ...prev,
+    ];
+  });
+};
+socket.on("new-chat", handleNewChat);
   // ================= CHAT UPDATED =================
   const handleUpdate = (data: any) => {
     setChats((prev) => {
@@ -118,6 +147,7 @@ useEffect(() => {
         }
         return chat;
       });
+      
 
       const moved = updated.find((c) => c.id === data.chatId);
       const rest = updated.filter((c) => c.id !== data.chatId);
@@ -125,6 +155,7 @@ useEffect(() => {
       return moved ? [moved, ...rest] : updated;
     });
   };
+
 
   // ================= CHAT SEEN UPDATED =================
   const handleSeenUpdate = (data: any) => {
@@ -165,6 +196,8 @@ useEffect(() => {
     socket.off("chat-updated", handleUpdate);
     socket.off("chat-seen-updated", handleSeenUpdate);
         socket.off("chat-seen-updated", handleSeenUpdate);
+          socket.off("new-chat", handleNewChat);
+
 
   };
 
@@ -219,7 +252,7 @@ useEffect(() => {
             ? chat.name
             : user?.username || "Unknown";
 
-          const displayAvatar = chat.isGroup ? null : user?.avatar;
+          const displayAvatar = chat.isGroup ? chat.chatPhoto : user?.avatar;
 
           return (
             <div
@@ -235,13 +268,14 @@ useEffect(() => {
                 } else {
                   setSelectedUserId(null);
                   setSelectedUserName(chat.name ?? null);
-                  setSelectedUserAvatar(null);
+                  setSelectedUserAvatar(chat.chatPhoto ?? null);
                 }
               }}
-         className={`group flex cursor-pointer items-start gap-3 rounded-2xl border p-3 shadow-sm transition hover:border-primary/35 hover:shadow-md
+      className={`group flex cursor-pointer items-start gap-3 rounded-2xl border p-3 shadow-sm transition hover:border-primary/35 hover:shadow-md
 ${
-  
-  Number(chat.lastMessage?.id) === Number(chat.lastSeenMessageId)
+  chat.lastMessage?.id == null
+    ? "border-border/75 bg-card/90"
+    : Number(chat.lastMessage?.id) === Number(chat.lastSeenMessageId)
     ? "border-border/75 bg-card/90"
     : "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
 }`}
@@ -257,7 +291,11 @@ ${
               >
                 {chat.isGroup ? (
                   <div className="flex h-full w-full items-center justify-center text-sm font-bold text-muted-foreground">
-                    {chat.name?.charAt(0).toUpperCase()}
+                   <img
+                      src={displayAvatar}
+                      alt="avatar"
+                      className="h-full w-full object-cover"
+                    />
                   </div>
                 ) : (
                   displayAvatar && (

@@ -30,7 +30,34 @@ const Messages = ({ chatId, userName }: MessagesProps) => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [lastSeenMessageId, setLastSeenMessageId] = useState<string | null>(null);
+const formatMessageTime = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
 
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
+
+  if (isToday) {
+    // ⏰ time only (English format)
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  }
+
+  // 📅 full date + time (English format)
+  return date.toLocaleString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
   // ================= FETCH CHAT HISTORY =================
   const fetchChatHistory = async (chatId: number) => {
     try {
@@ -155,33 +182,40 @@ useEffect(() => {
       {/* ================= MESSAGES ================= */}
       <div className="h-[52vh] overflow-y-auto border rounded-xl p-3 space-y-3">
         {messages.map((msg, index) => {
-          const isMe = msg.sender === myUsername;
+  const isMe = msg.sender === myUsername;
 
-          return (
-            <div
-              key={msg.id ?? index}
-              className={`flex flex-col w-full ${
-                isMe ? "items-end" : "items-start"
-              }`}
-            >
-              {isGroup && !isMe && (
-                <span className="text-xs text-gray-500 mb-1">
-                  {msg.sender}
-                </span>
-              )}
+const time = formatMessageTime(msg.createdAt);
 
-              <div
-                className={`px-3 py-2 rounded-xl text-sm max-w-[70%] ${
-                  isMe
-                    ? "bg-blue-500 text-white"
-                    : "bg-gray-200 text-black"
-                }`}
-              >
-                {msg.content}
-              </div>
-            </div>
-          );
-        })}
+  return (
+    <div
+      key={msg.id ?? index}
+      className={`flex flex-col w-full ${
+        isMe ? "items-end" : "items-start"
+      }`}
+    >
+      {/* ⏰ time فوق الرسالة */}
+      <span className="text-[10px] text-gray-400 mb-1">
+        {time}
+      </span>
+
+      {isGroup && !isMe && (
+        <span className="text-xs text-gray-500 mb-1">
+          {msg.sender}
+        </span>
+      )}
+
+      <div
+        className={`px-3 py-2 rounded-xl text-sm max-w-[70%] ${
+          isMe
+            ? "bg-blue-500 text-white"
+            : "bg-gray-200 text-black"
+        }`}
+      >
+        {msg.content}
+      </div>
+    </div>
+  );
+})}
       </div>
 
       {/* ================= INPUT ================= */}

@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import { getChatHistory,getUserChats ,getChatData, deleteChat, createGroupChat,getGroupMembers, getChat} from '../controllers/chat-controller';
+import { getChatHistory,getUserChats ,getChatData, deleteChat, createGroupChat,getGroupMembers, getChat, updateGroupPhoto} from '../controllers/chat-controller';
 import { authMiddleware } from '../middleware/auth';
+import upload from '../config/multer';
 
 const router = Router();
 
@@ -11,9 +12,18 @@ router.get('/getUserChats', authMiddleware, getUserChats);
 router.get('/getChatData/:receiverId', authMiddleware, getChatData);
 router.delete("/:chatId", authMiddleware, deleteChat);
 router.get("/:id", authMiddleware, getChat);
-router.post("/createGroup", authMiddleware, createGroupChat);
+router.post(
+  "/createGroup",authMiddleware,
+  upload.single("chatPhoto"),
+  createGroupChat
+);
 router.get("/group/:chatId/members", authMiddleware, getGroupMembers);
-// router.post("/createGroup", authMiddleware, addUserToGroup);
 
+router.put(
+  "/:chatId/photo",
+  authMiddleware,
+  upload.single("image"), // ⚠️ نفس الاسم في الفرونت
+  updateGroupPhoto
+);
 
 export default router;

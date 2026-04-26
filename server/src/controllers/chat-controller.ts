@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { getIO} from "../socket"; // حسب setup عندك
+import cloudinary from '../config/cloudinary';
+import { uploadToCloudinary } from '../utils/uploadPhoto';
 
 const prisma = new PrismaClient();
 interface JwtPayload {
@@ -244,6 +246,7 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
           lastMessage,
           lastSeenMessageId,
           isUpToDate,
+          chatPhoto: chat.chatPhoto,
         };
       })
     );
@@ -425,7 +428,13 @@ export const getChat = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: "Chat not found" });
     }
 
-    return res.status(200).json(chat);
+    const safeJson = (data: any) =>
+  JSON.parse(
+    JSON.stringify(data, (_, value) =>
+      typeof value === "bigint" ? value.toString() : value
+    )
+  );
+return res.status(200).json(safeJson(chat));
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
@@ -433,21 +442,31 @@ export const getChat = async (req: AuthRequest, res: Response) => {
 };
 //===================group
 //=======================create chat group
+const DEFAULT_GROUP_PHOTO =
+  "https://static.vecteezy.com/system/resources/previews/026/019/617/non_2x/group-profile-avatar-icon-default-social-media-forum-profile-photo-vector.jpg";
+
 export const createGroupChat = async (req: AuthRequest, res: Response) => {
   try {
     const creatorId = req.user?.userId;
 
     if (!creatorId) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({ message: "Unauthorized1" });
     }
 
-    const { usernames, name } = req.body;
+    const { name } = req.body;
 
     if (!name) {
       return res.status(400).json({ message: "Group name required" });
     }
+let {usernames} = req.body.usernames;
 
+// لو جاية string (JSON)
+if (typeof usernames === "string") {
+  usernames = JSON.parse(usernames);
+}
+    // =========================
     // 1. get users
+    // =========================
     const users = await prisma.user.findMany({
       where: {
         username: {
@@ -456,15 +475,43 @@ export const createGroupChat = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    // 2. create chat
+    // =========================
+    // 2. upload image (if exists)
+    // =========================
+    let chatPhoto = DEFAULT_GROUP_PHOTO;
+
+    if (req.file) {
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "group-chats",
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+
+        stream.end(req.file?.buffer);
+      });
+
+      chatPhoto = (result as any).secure_url;
+    }
+
+    // =========================
+    // 3. create chat
+    // =========================
     const chat = await prisma.chat.create({
       data: {
         name,
         isGroup: true,
+        chatPhoto, // 👈 الجديد
       },
     });
 
-    // 3. create members (بدون username هنا)
+    // =========================
+    // 4. members
+    // =========================
     const membersData = [
       {
         chatId: chat.id,
@@ -483,22 +530,18 @@ export const createGroupChat = async (req: AuthRequest, res: Response) => {
       skipDuplicates: true,
     });
 
-    // 4. reload full chat
+    // =========================
+    // 5. reload chat
+    // =========================
     const fullChat = await prisma.chat.findUnique({
       where: { id: chat.id },
       include: {
-        members: {
-          include: {
-            user: true,
-          },
-        },
+        members: { include: { user: true } },
         messages: {
           orderBy: { createdAt: "desc" },
           take: 1,
           include: {
-            sender: {
-              select: { username: true },
-            },
+            sender: { select: { username: true } },
           },
         },
       },
@@ -508,11 +551,14 @@ export const createGroupChat = async (req: AuthRequest, res: Response) => {
       return res.status(500).json({ message: "Failed to load chat" });
     }
 
-    // 5. socket payload
+    // =========================
+    // 6. payload
+    // =========================
     const payload = {
       id: fullChat.id,
       isGroup: true,
       name: fullChat.name,
+      chatPhoto: fullChat.chatPhoto, // 👈 مهم
       members: fullChat.members.map((m) => ({
         userId: m.userId,
         username: m.user.username,
@@ -529,23 +575,21 @@ export const createGroupChat = async (req: AuthRequest, res: Response) => {
 
     const io = getIO();
 
-    // 🔥 هنا الصح: نستخدم usernames الحقيقيين
     const allUsernames = [
-      fullChat.members.find(m => m.userId === creatorId)?.user.username,
-      ...users.map(u => u.username),
+      fullChat.members.find((m) => m.userId === creatorId)?.user.username,
+      ...users.map((u) => u.username),
     ];
 
     for (const username of allUsernames) {
       if (!username) continue;
-
       io.to(`user:${username}`).emit("new-chat", payload);
+      console.log("Emitted new-chat to", username, "with payload:", payload);
     }
 
     return res.status(201).json({
       message: "Group chat created successfully",
       chatId: chat.id,
     });
-
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
@@ -638,30 +682,132 @@ export const getGroupMembers = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
-//==================add member to group chat======================
-// export const addUserToGroup = async (req: Request, res: Response) => {
-//   try {
-//     const { chatId, username } = req.body;
+//==================update group photo======================
+export const updateGroupPhoto = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const chatId = Number(req.params.chatId);
 
-//     const user = await prisma.user.findUnique({
-//       where: { username },
-//     });
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
-//     if (!user) {
-//       return res.status(404).json({ message: "User not found" });
-//     }
+    if (isNaN(chatId)) {
+      return res.status(400).json({ message: "Invalid chat id" });
+    }
 
-//     await prisma.chatMember.create({
-//       data: {
-//         chatId,
-//         userId: user.id,
-//         isAdmin: false,
-//       },
-//     });
+    // =========================
+    // 1️⃣ check membership
+    // =========================
+    const membership = await prisma.chatMember.findUnique({
+      where: {
+        chatId_userId: {
+          chatId,
+          userId,
+        },
+      },
+    });
 
-//     return res.json({ message: "User added successfully" });
-//   } catch (error) {
-//     return res.status(500).json({ message: "Server error" });
-//   }
-// };
+    if (!membership) {
+      return res.status(403).json({
+        message: "You are not a member of this group",
+      });
+    }
+
+    // =========================
+    // 2️⃣ check admin
+    // =========================
+    if (!membership.isAdmin) {
+      return res.status(403).json({
+        message: "Only admin can update group photo",
+      });
+    }
+
+    // =========================
+    // 3️⃣ check chat
+    // =========================
+    const chat = await prisma.chat.findUnique({
+      where: { id: chatId },
+    });
+
+    if (!chat || !chat.isGroup) {
+      return res.status(400).json({
+        message: "Invalid group",
+      });
+    }
+
+    // =========================
+    // 4️⃣ check file
+    // =========================
+    if (!req.file) {
+      return res.status(400).json({
+        message: "No image uploaded",
+      });
+    }
+
+    // =========================
+    // 5️⃣ upload to cloudinary
+    // =========================
+  let chatPhoto = DEFAULT_GROUP_PHOTO; // 👈 حط اللينك الافتراضي هنا
+
+if (req.file) {
+  const result = await new Promise<{
+    secure_url: string;
+  }>((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "group-chats",
+      },
+      (error, result) => {
+        if (error || !result) return reject(error);
+        resolve(result as { secure_url: string });
+      }
+    );
+
+    stream.end(req.file?.buffer); // 👈 صح
+  });
+
+  chatPhoto = result.secure_url;
+}
+    // =========================
+    // 6️⃣ update DB
+    // =========================
+    const updatedChat = await prisma.chat.update({
+      where: { id: chatId },
+      data: {
+        chatPhoto: chatPhoto,
+      },
+    });
+
+    // =========================
+    // 7️⃣ emit socket 🔥
+    // =========================
+    const io = getIO();
+
+    const members = await prisma.chatMember.findMany({
+      where: { chatId },
+      include: {
+        user: {
+          select: { username: true },
+        },
+      },
+    });
+
+    for (const m of members) {
+      io.to(`user:${m.user.username}`).emit("group-photo-updated", {
+        chatId,
+        chatPhoto: chatPhoto,
+      });
+    }
+
+    return res.status(200).json({
+      message: "Group photo updated",
+      chatPhoto: updatedChat.chatPhoto,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
 

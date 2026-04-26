@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { useUserData } from "../store/userData";
 import SearchForGroup from "./SearchForGroup";
@@ -7,13 +9,14 @@ const CreateGroup = () => {
   const [groupName, setGroupName] = useState("");
   const [usernameInput, setUsernameInput] = useState("");
   const [usernames, setUsernames] = useState<string[]>([]);
-  const{ token } = useUserData();
+  const [groupImage, setGroupImage] = useState<File | null>(null);
+
+  const { token } = useUserData();
 
   // ➕ إضافة username
   const addUser = () => {
     if (!usernameInput.trim()) return;
 
-    // منع التكرار
     if (usernames.includes(usernameInput.trim())) return;
 
     setUsernames([...usernames, usernameInput.trim()]);
@@ -27,30 +30,26 @@ const CreateGroup = () => {
 
   // 🚀 submit
   const handleSubmit = async () => {
-   
-    if (!groupName.trim()) {
-  
-      return;
-    }
-
-    if (usernames.length === 0) {
-  
-      return;
-    }
+    if (!groupName.trim()) return;
+    if (usernames.length === 0) return;
 
     try {
+      const formData = new FormData();
+
+      formData.append("name", groupName);
+      formData.append("usernames", JSON.stringify(usernames));
+
+      if (groupImage) {
+        formData.append("chatPhoto", groupImage);
+      }
+
       const res = await fetch("http://localhost:5000/api/chat/createGroup", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          name: groupName,
-          usernames,
-        }),
+        body: formData,
       });
-   
 
       const data = await res.json();
 
@@ -59,13 +58,12 @@ const CreateGroup = () => {
         return;
       }
 
-      // reset
       setClicked(false);
       setGroupName("");
       setUsernames([]);
-      alert("Group created successfully");
+      setGroupImage(null);
 
-      console.log("Group created:", data);
+      alert("Group created successfully");
     } catch (err) {
       console.error(err);
       alert("Server error");
@@ -82,9 +80,14 @@ const CreateGroup = () => {
       </button>
 
       {clicked && (
-        <div  onClick={() => setClicked(false) }className="fixed inset-0 z-40 flex items-center justify-center bg-black/70">
-          <div  onClick={(e) => e.stopPropagation()} className="w-[400px] rounded-xl bg-white  p-4 space-y-4">
-            
+        <div
+          onClick={() => setClicked(false)}
+          className="fixed inset-0 z-40 flex items-center justify-center bg-black/70"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-[400px] rounded-xl bg-white p-4 space-y-4"
+          >
             <h2 className="text-lg font-bold">Create Group</h2>
 
             {/* 🏷️ Group Name */}
@@ -96,22 +99,18 @@ const CreateGroup = () => {
               className="w-full rounded border p-2"
             />
 
-            {/* 👤 Add user */}
-            {/* <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder="Enter username"
-                value={usernameInput}
-                onChange={(e) => setUsernameInput(e.target.value)}
-                className="flex-1 rounded border p-2"
-              />
-              <button
-                onClick={addUser}
-                className="rounded bg-green-500 px-3 text-white"
-              >
-                Add
-              </button>
-            </div> */}
+            {/* 🖼️ Group Image */}
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files && e.target.files[0]) {
+                  setGroupImage(e.target.files[0]);
+                }
+              }}
+              className="w-full"
+            />
+
             <SearchForGroup setUsernames={setUsernames} />
 
             {/* 👥 Selected Users */}
