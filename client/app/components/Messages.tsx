@@ -5,6 +5,8 @@ import { useSocket } from "../provider/SocketProvider";
 import { useUserData } from "../store/userData";
 import { useChatStore } from "../store/chatStore";
 import { HiOutlinePaperAirplane } from "react-icons/hi2";
+import MessageMenu from "./MessageMenu";
+import { useSelectedUserStore } from "../store/selectedUser";
 
 interface MessagesProps {
   chatId: string | null;
@@ -24,6 +26,7 @@ const Messages = ({ chatId, userName }: MessagesProps) => {
   const socket = useSocket();
   const { token, userName: myUsername } = useUserData();
   const isGroup = useChatStore((state) => state.isGroup);
+  const{isCurrentUserAdmin} = useSelectedUserStore();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -138,12 +141,33 @@ useEffect(() => {
       });
     }
   };
+  
+
+
 
   socket.on("new-message", handleNewMessage);
 
+  // ================= DELETE MESSAGE =================
+ const handleMessageDeleted = (data: {
+    messageId: string | number;
+    chatId: string | number;
+  }) => {
+    setMessages((prev) =>
+      prev.filter(
+        (msg) => Number(msg.id) !== Number(data.messageId)
+      )
+    );
+  };
+
+  socket.on("message-deleted", handleMessageDeleted);
+
+
   return () => {
     socket.off("new-message", handleNewMessage);
+    socket.off("message-deleted", handleMessageDeleted);
   };
+
+
 }, [socket, chatId, myUsername]);
 
   // ================= SEND MESSAGE =================
@@ -213,7 +237,23 @@ const time = formatMessageTime(msg.createdAt);
       >
         {msg.content}
       </div>
-    </div>
+      {!isGroup && msg.sender === myUsername && (
+        msg.id && <MessageMenu messageId={msg.id} />
+      )}    
+
+
+        {
+        isGroup &&  isCurrentUserAdmin && 
+       (msg.id && <MessageMenu messageId={msg.id} />) 
+       ||
+          isGroup &&   msg.sender === myUsername && 
+       (msg.id && <MessageMenu messageId={msg.id} />) 
+
+      }  
+      
+      
+      
+      </div>
   );
 })}
       </div>

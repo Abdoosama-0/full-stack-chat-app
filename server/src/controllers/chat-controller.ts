@@ -143,6 +143,9 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
 
         let otherUser = null;
 
+        // =========================
+        // private chat → get other user
+        // =========================
         if (isPrivate) {
           const otherMember = chat.members.find(
             (m) => m.userId !== userId
@@ -172,7 +175,7 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
           : null;
 
         // =========================
-        // member state
+        // member state (🔥 updated)
         // =========================
         const member = await prisma.chatMember.findUnique({
           where: {
@@ -183,6 +186,7 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
           },
           select: {
             lastSeenMessageId: true,
+            isAdmin: true, // 👈 جديد
           },
         });
 
@@ -191,15 +195,11 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
           : null;
 
         // =========================
-        // 🔥 AUTO UPDATE IF I SENT LAST MESSAGE
+        // auto seen لو أنا اللي باعت
         // =========================
-        if (
-          lastMessage &&
-          lastMessage.senderId === userId
-        ) {
+        if (lastMessage && lastMessage.senderId === userId) {
           lastSeenMessageId = lastMessage.id;
 
-          // update DB
           await prisma.chatMember.update({
             where: {
               chatId_userId: {
@@ -223,6 +223,24 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
             Number(lastSeenMessageId) >= Number(lastMessage.id);
         }
 
+        // =========================
+        // 👑 admins list
+        // =========================
+        const admins = chat.members
+          .filter((m) => m.isAdmin)
+          .map((m) => ({
+            userId: m.userId.toString(),
+            username: m.user.username,
+            avatar: m.user.avatar,
+          }));
+
+        // =========================
+        // 👑 is current user admin
+        // =========================
+        const isCurrentUserAdmin = isGroup
+          ? !!member?.isAdmin
+          : false;
+
         return {
           id: chat.id.toString(),
 
@@ -232,12 +250,18 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
           ...(isGroup
             ? {
                 name: chat.name,
+
                 members: chat.members.map((m) => ({
                   userId: m.userId.toString(),
                   username: m.user.username,
                   email: m.user.email,
                   avatar: m.user.avatar,
+                  role: m.isAdmin ? "admin" : "member", // 👈 role
+                  isAdmin: m.isAdmin,
                 })),
+
+                admins, // 👈 list admins
+                isCurrentUserAdmin, // 👈 هل أنا admin
               }
             : {
                 otherUser,
@@ -257,7 +281,6 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
-
 export const getChatData = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.userId;
@@ -813,5 +836,107 @@ if (req.file) {
     return res.status(500).json({ message: "Server error" });
   }
 };
+//================
+// ================= DELETE MESSAGE =================
+export const deleteMessage = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const messageId = Number(req.params.messageId);
 
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    if (isNaN(messageId)) {
+      return res.status(400).json({ message: "Invalid message id" });
+    }
+
+    // =========================
+    // 1️⃣ get message
+    // =========================
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+      include: {
+        chat: true,
+      },
+    });
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    const chatId = message.chatId;
+
+    // =========================
+    // 2️⃣ check membership
+    // =========================
+    const membership = await prisma.chatMember.findUnique({
+      where: {
+        chatId_userId: {
+          chatId,
+          userId,
+        },
+      },
+    });
+
+    if (!membership) {
+      return res.status(403).json({
+        message: "You are not a member of this chat",
+      });
+    }
+
+    // =========================
+    // 3️⃣ permission check
+    // =========================
+    const isOwner = message.senderId === userId;
+    const isAdmin = membership.isAdmin && message.chat.isGroup;
+
+    if (!isOwner && !isAdmin) {
+      return res.status(403).json({
+        message: "You are not allowed to delete this message",
+      });
+    }
+
+    // =========================
+    // 4️⃣ delete message
+    // =========================
+    await prisma.message.delete({
+      where: { id: messageId },
+    });
+
+    // =========================
+    // 5️⃣ emit socket 🔥
+    // =========================
+    const io = getIO();
+
+    // هات كل أعضاء الشات
+    const members = await prisma.chatMember.findMany({
+      where: { chatId },
+      include: {
+        user: {
+          select: { username: true },
+        },
+      },
+    });
+
+    for (const m of members) {
+      io.to(`user:${m.user.username}`).emit("message-deleted", {
+        messageId,
+        chatId,
+      });
+      console.log('=====================')
+      console.log("Emitted message-deleted for", m.user.username, "with messageId:", messageId);
+      console.log('=====================')
+
+    }
+
+    return res.status(200).json({
+      message: "Message deleted successfully",
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
 

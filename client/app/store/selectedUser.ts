@@ -7,12 +7,16 @@ type selectedUserStore = {
   setSelectedUserName: (name: string | null) => void;
   selectedUserAvatar: string | null;
   setSelectedUserAvatar: (avatar: string | null) => void;
+  isCurrentUserAdmin?: boolean;
+  setIsCurrentUserAdmin?: (isAdmin: boolean) => void; 
 
   clearSelectedUser: () => void; 
 };
 
 export const useSelectedUserStore = create<selectedUserStore>((set) => ({
   selectedUserId: null,
+  setIsCurrentUserAdmin: (isAdmin) => set({ isCurrentUserAdmin: isAdmin }),
+  
 
   setSelectedUserId: (id) =>
     set({ selectedUserId: id }),

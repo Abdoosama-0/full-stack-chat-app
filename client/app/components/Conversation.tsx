@@ -94,12 +94,10 @@ const Conversation = (props: ConversationProps) => {
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-1">
             {isGroup &&  
             <GroupDetails />
-            // <EditGroupPhoto  chatId={Number(selectedChatId)} />
             
             }
                  
             <span className="font-medium">Current Chat: {selectedChatId}</span>
-                    {isGroup &&     <ChatMembers chatId={Number(selectedChatId)} />}
 
             <span className="text-muted-foreground">Chatting with: {selectedUserName}</span>
           </div>

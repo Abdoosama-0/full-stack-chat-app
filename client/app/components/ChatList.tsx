@@ -21,6 +21,9 @@ type Chat = {
   name: any;
   isGroup: any;
   id: number;
+   isCurrentUserAdmin?: boolean;
+
+
 
   isUpToDate?: boolean; // 👈 الجديد
 
@@ -56,6 +59,7 @@ const { selectedChatId } = useChatStore();
     setSelectedUserId,
     setSelectedUserName,
     setSelectedUserAvatar,
+    setIsCurrentUserAdmin
   } = useSelectedUserStore();
 
   const [chats, setChats] = useState<Chat[]>([]);
@@ -254,6 +258,8 @@ socket.on("new-chat", handleNewChat);
 
           const displayAvatar = chat.isGroup ? chat.chatPhoto : user?.avatar;
 
+
+
           return (
             <div
               key={chat.id}
@@ -269,6 +275,7 @@ socket.on("new-chat", handleNewChat);
                   setSelectedUserId(null);
                   setSelectedUserName(chat.name ?? null);
                   setSelectedUserAvatar(chat.chatPhoto ?? null);
+                  setIsCurrentUserAdmin?.(!!chat.isCurrentUserAdmin);
                 }
               }}
       className={`group flex cursor-pointer items-start gap-3 rounded-2xl border p-3 shadow-sm transition hover:border-primary/35 hover:shadow-md
@@ -326,7 +333,8 @@ ${
 
               {/* Menu */}
               <div onClick={(e) => e.stopPropagation()}>
-                <ChatMenu chatId={chat.id} />
+                {!chat.isGroup && <ChatMenu chatId={chat.id} />}
+           
               </div>
             </div>
           );
