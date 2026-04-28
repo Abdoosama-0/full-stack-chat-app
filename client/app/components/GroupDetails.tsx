@@ -3,6 +3,7 @@ import { CiMenuKebab } from "react-icons/ci";
 import { useChatStore } from "../store/chatStore";
 import { useUserData } from "../store/userData";
 import EditGroupPhoto from "./edit/EditGroupPhoto";
+import EditGroupName from "./edit/EditGroupName";
 
 type Member = {
   user: any;
@@ -14,8 +15,8 @@ type Member = {
 };
 
 type GroupData = {
-  chatId: number;
-  groupName: string;
+  id: number;
+  name: string;
   chatPhoto?: string;
   members: Member[];
 };
@@ -72,6 +73,8 @@ const [isAdmin, setIsAdmin] = useState(false);
             {/* ===== HEADER ===== */}
             <h2 className="text-lg font-semibold">Group Details</h2>
 
+          
+
             {/* ===== GROUP PHOTO ===== */}
             <div className="flex justify-center">
                 <div className="">
@@ -92,9 +95,13 @@ const [isAdmin, setIsAdmin] = useState(false);
             </div>
 
             {/* ===== GROUP NAME ===== */}
+           <div className="flex items-center justify-center gap-2">
             <p className="text-center font-semibold">
-              {group?.groupName}
+              {group?.name}
             </p>
+             <EditGroupName chatId={Number(group?.id) || 0} chatName={group?.name ?? ""} />
+            </div>
+           
 
             {/* ===== MEMBERS ===== */}
             <div className="space-y-2 max-h-[250px] overflow-y-auto">

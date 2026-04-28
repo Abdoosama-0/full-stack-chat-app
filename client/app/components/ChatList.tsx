@@ -116,7 +116,16 @@ socket?.on("new-chat", handleNewChat);
 useEffect(() => {
   if (!socket) return;
 
-
+//================
+socket.on("group-name-updated", (data) => {
+  setChats((prev) =>
+    prev.map((chat) =>
+      Number(chat.id) === Number(data.chatId)
+        ? { ...chat, name: data.name }
+        : chat
+    )
+  );
+});
   //======================   handleNewChat 
   const handleNewChat = (data: any) => {
   setChats((prev) => {

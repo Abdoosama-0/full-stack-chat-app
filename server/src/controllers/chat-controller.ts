@@ -1044,3 +1044,110 @@ return res.status(200).json(safeJson(updatedMessage));
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+//===================edit group name======================
+export const updateGroupName = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const chatId = Number(req.params.chatId);
+    const { name } = req.body;
+
+    // =========================
+    // 1️⃣ validation
+    // =========================
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    if (isNaN(chatId)) {
+      return res.status(400).json({ message: "Invalid chat id" });
+    }
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: "Group name is required" });
+    }
+
+    // =========================
+    // 2️⃣ check membership
+    // =========================
+    const membership = await prisma.chatMember.findUnique({
+      where: {
+        chatId_userId: {
+          chatId,
+          userId,
+        },
+      },
+    });
+
+    if (!membership) {
+      return res.status(403).json({
+        message: "You are not a member of this group",
+      });
+    }
+
+    // =========================
+    // 3️⃣ check admin
+    // =========================
+    if (!membership.isAdmin) {
+      return res.status(403).json({
+        message: "Only admin can update group name",
+      });
+    }
+
+    // =========================
+    // 4️⃣ check chat
+    // =========================
+    const chat = await prisma.chat.findUnique({
+      where: { id: chatId },
+    });
+
+    if (!chat || !chat.isGroup) {
+      return res.status(400).json({
+        message: "Invalid group",
+      });
+    }
+
+    // =========================
+    // 5️⃣ update DB
+    // =========================
+    const updatedChat = await prisma.chat.update({
+      where: { id: chatId },
+      data: {
+        name: name.trim(),
+      },
+    });
+
+    // =========================
+    // 6️⃣ emit socket 🔥
+    // =========================
+    const io = getIO();
+
+    const members = await prisma.chatMember.findMany({
+      where: { chatId },
+      include: {
+        user: {
+          select: { username: true },
+        },
+      },
+    });
+
+    for (const m of members) {
+      io.to(`user:${m.user.username}`).emit("group-name-updated", {
+        chatId,
+        name: updatedChat.name,
+      });
+    }
+
+    // =========================
+    // 7️⃣ response
+    // =========================
+    return res.status(200).json({
+      message: "Group name updated",
+      name: updatedChat.name,
+    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
