@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getChatHistory,getUserChats ,getChatData, deleteChat, createGroupChat,getGroupMembers, getChat, updateGroupPhoto, deleteMessage} from '../controllers/chat-controller';
+import { getChatHistory,getUserChats ,getChatData, deleteChat, createGroupChat,getGroupMembers, getChat, updateGroupPhoto, deleteMessage, editMessage} from '../controllers/chat-controller';
 import { authMiddleware } from '../middleware/auth';
 import upload from '../config/multer';
 
@@ -26,6 +26,6 @@ router.put(
   updateGroupPhoto
 );
 router.delete("/message/:messageId", authMiddleware, deleteMessage);
-
+router.put("/message/:messageId", authMiddleware, editMessage);
 
 export default router;

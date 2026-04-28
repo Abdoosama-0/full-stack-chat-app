@@ -939,4 +939,108 @@ export const deleteMessage = async (req: AuthRequest, res: Response) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+//======================edit message
+export const editMessage = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const messageId = Number(req.params.messageId);
+    const { content } = req.body;
 
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    if (isNaN(messageId)) {
+      return res.status(400).json({ message: "Invalid message id" });
+    }
+
+    if (!content || !content.trim()) {
+      return res.status(400).json({ message: "Content is required" });
+    }
+
+    // =========================
+    // 1️⃣ get message
+    // =========================
+    const message = await prisma.message.findUnique({
+      where: { id: messageId },
+    });
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    const chatId = message.chatId;
+
+    // =========================
+    // 2️⃣ check membership
+    // =========================
+    const membership = await prisma.chatMember.findUnique({
+      where: {
+        chatId_userId: {
+          chatId,
+          userId,
+        },
+      },
+    });
+
+    if (!membership) {
+      return res.status(403).json({ message: "Not a member of this chat" });
+    }
+
+    // =========================
+    // 3️⃣ only sender can edit
+    // =========================
+    if (message.senderId !== userId) {
+      return res.status(403).json({
+        message: "You can only edit your own messages",
+      });
+    }
+
+    // =========================
+    // 4️⃣ update message
+    // =========================
+    const updatedMessage = await prisma.message.update({
+      where: { id: messageId },
+      data: {
+        content,
+       
+      },
+    });
+
+    // =========================
+    // 5️⃣ emit socket 🔥
+    // =========================
+    const io = getIO();
+
+    const members = await prisma.chatMember.findMany({
+      where: { chatId },
+      include: {
+        user: {
+          select: { username: true },
+        },
+      },
+    });
+
+    for (const m of members) {
+      io.to(`user:${m.user.username}`).emit("message-edited", {
+        messageId,
+        chatId,
+        content,
+      });
+    }
+
+    // =========================
+const safeJson = (data: any) =>
+  JSON.parse(
+    JSON.stringify(data, (_, value) =>
+      typeof value === "bigint" ? value.toString() : value
+    )
+  );
+
+
+return res.status(200).json(safeJson(updatedMessage));
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};

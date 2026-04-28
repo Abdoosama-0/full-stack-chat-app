@@ -147,6 +147,17 @@ useEffect(() => {
 
   socket.on("new-message", handleNewMessage);
 
+
+  //=====================edit message========================
+  socket.on("message-edited", (data) => {
+  setMessages((prev) =>
+    prev.map((msg) =>
+      Number(msg.id) === Number(data.messageId)
+        ? { ...msg, content: data.content }
+        : msg
+    )
+  );
+});
   // ================= DELETE MESSAGE =================
  const handleMessageDeleted = (data: {
     messageId: string | number;
@@ -238,7 +249,7 @@ const time = formatMessageTime(msg.createdAt);
         {msg.content}
       </div>
       {!isGroup && msg.sender === myUsername && (
-        msg.id && <MessageMenu messageId={msg.id} />
+        msg.id && <MessageMenu messageId={msg.id} messageContent={msg.content} />
       )}    
 
 
