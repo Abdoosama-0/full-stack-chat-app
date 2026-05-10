@@ -89,7 +89,6 @@ const { token } = useUserData();
         setLoading(true);
         setMessage("");
 
-        const token = localStorage.getItem("token") || "";
         const res = await fetch(
           `http://localhost:5000/api/chat/getChatData/${user?.id}`,
           {
@@ -108,7 +107,7 @@ const { token } = useUserData();
             setSelectedUserAvatar(user.avatar);
          
 
-          setMessage(data.message || "No chat found");
+    
                      setSelectedChatId("-1")
 
         } else {
@@ -128,6 +127,7 @@ const { token } = useUserData();
       }
     };
     const handleUserClick = (user: any) => {
+     
       setClickedUser(user);
       fetchChatData(user);
     }

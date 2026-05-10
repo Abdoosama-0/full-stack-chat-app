@@ -287,48 +287,71 @@ export const getChatData = async (req: AuthRequest, res: Response) => {
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-    console.log("1");
+    
 
     const receiverId = Number(req.params.receiverId);
 
     if (!receiverId) {
-          console.log("2");
+       
 
       return res.status(400).json({ message: "Invalid receiver id" });
     }
 
-    const chat = await prisma.chat.findFirst({
-      where: {
-        AND: [
-          { members: { some: { userId: userId } } },
-          { members: { some: { userId: receiverId } } },
-        ],
-      },
-      include: {
+const chat = await prisma.chat.findFirst({
+  where: {
+    isGroup: false,
+
+    AND: [
+      {
         members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                username: true,
-                email: true,
-                avatar: true,
-                createdAt: true,
-              },
-            },
+          some: {
+            userId: userId,
           },
         },
       },
-    });
+
+      {
+        members: {
+          some: {
+            userId: receiverId,
+          },
+        },
+      },
+    ],
+  },
+
+  include: {
+    members: {
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            email: true,
+            avatar: true,
+            createdAt: true,
+          },
+        },
+      },
+    },
+  },
+});
+    console.log("Chat query result for users", userId, "and", receiverId, ":", chat);
+
 
     if (!chat) {
-      console.log("3");
       return res.status(404).json({ message: "There is no chat" });
+    
+    }else{
+      console.log("==============================");
+      console.log("Chat found between user", userId, "and", receiverId, "with chat ID:", chat.id);
+      console.log("==============================");
+
     }
+  
 
     // نتأكد إنه private chat (عضوين بس)
     if (chat.members.length !== 2) {
-      console.log("4");
       return res.status(400).json({ message: "Not a private chat" });
     }
 

@@ -36,6 +36,7 @@ const Conversation = (props: ConversationProps) => {
     (state) => state.selectedUserAvatar
   );
 
+
   
   if (selectedChatId == "-1") {
     return (
@@ -55,10 +56,10 @@ const Conversation = (props: ConversationProps) => {
               </span>
             )}
           </div>
-          <span>Start conversation with {selectedUserName}</span>
+          <span>Start conversation with {selectedUserName} </span>
   
         </div>
-        <Messages chatId={"-1"} userName={selectedUserName} userId={selectedUserId} avatar={""} />
+        <Messages chatId={selectedChatId} userName={selectedUserName} userId={selectedUserId} avatar={""} />
       </div>
     );
   } else if (selectedChatId !== null && selectedChatId !== "-1") {

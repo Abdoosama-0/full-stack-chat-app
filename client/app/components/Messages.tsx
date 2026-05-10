@@ -64,8 +64,14 @@ const formatMessageTime = (dateString: string) => {
   // ================= FETCH CHAT HISTORY =================
   const fetchChatHistory = async (chatId: number) => {
     try {
+      
       setLoading(true);
       setErrorMessage("");
+      if(chatId === -1){
+        setMessages([]);
+        setLoading(false);
+        return;
+      }
 
       const res = await fetch(
         `http://localhost:5000/api/chat/${chatId}/messages`,
@@ -79,7 +85,10 @@ const formatMessageTime = (dateString: string) => {
       const data = await res.json();
 
       if (!res.ok) {
+              setMessages([]);
+
         setErrorMessage(data.message || "Failed to fetch chat history");
+
         return;
       }
 
@@ -101,9 +110,9 @@ const formatMessageTime = (dateString: string) => {
   };
 
   useEffect(() => {
-    if (chatId && chatId !== "-1") {
+   
       fetchChatHistory(Number(chatId));
-    }
+    
   }, [chatId]);
 
 

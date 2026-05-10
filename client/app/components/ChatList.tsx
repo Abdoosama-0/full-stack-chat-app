@@ -312,6 +312,7 @@ ${
                       alt="avatar"
                       className="h-full w-full object-cover"
                     />
+                   
                   </div>
                 ) : (
                   displayAvatar && (
@@ -321,6 +322,7 @@ ${
                       className="h-full w-full object-cover"
                     />
                   )
+                  
                 )}
 
                 <ImagePreview
@@ -331,8 +333,13 @@ ${
 
               {/* Content */}
               <div className="min-w-0 flex-1 space-y-1">
-                <p className="truncate text-sm font-semibold text-foreground">
+                <p className=" flex justify-between items-center truncate text-sm font-semibold text-foreground">
                   {displayName}
+                  {chat.isGroup && (
+                    <span className="ml-2 rounded-full bg-slate-300 px-2 py-1 text-xs font-medium text-white">
+                      Group
+                    </span>
+                  )}
                 </p>
 
                 <p className="line-clamp-2 text-sm text-muted-foreground">
