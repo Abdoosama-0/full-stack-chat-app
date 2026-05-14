@@ -20,6 +20,11 @@ interface Message {
   content: string;
   sender: string;
   createdAt: string;
+  replyOn?: {
+    id: number;
+    content: string;
+    senderId?: number;
+  } | null;
 }
 
 const Messages = ({ chatId, userName }: MessagesProps) => {
@@ -27,7 +32,11 @@ const Messages = ({ chatId, userName }: MessagesProps) => {
   const { token, userName: myUsername } = useUserData();
   const isGroup = useChatStore((state) => state.isGroup);
   const{isCurrentUserAdmin} = useSelectedUserStore();
-
+const [replyToMessage, setReplyToMessage] = useState<{
+  id: number;
+  content: string;
+  sender?: string;
+} | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -97,6 +106,13 @@ const formatMessageTime = (dateString: string) => {
         content: msg.content,
         sender: msg.sender?.username || msg.sender,
         createdAt: msg.createdAt,
+        replyOn: msg.replyOn
+          ? {
+              id: msg.replyOn.id,
+              content: msg.replyOn.content,
+              senderId: msg.replyOn.senderId,
+            }
+          : null,
       }));
 
       setMessages(formatted);
@@ -124,7 +140,7 @@ useEffect(() => {
     chatId: Number(chatId),
   });
 }, [chatId, socket]);
-  // ================= SOCKET =================
+  // ================= new Message =================
 useEffect(() => {
   if (!socket || !chatId) return;
 
@@ -137,6 +153,7 @@ useEffect(() => {
         content: data.content,
         sender: data.from,
         createdAt: data.createdAt,
+        replyOn: data.replyOn,
       },
     ]);
 
@@ -192,25 +209,30 @@ useEffect(() => {
 
   // ================= SEND MESSAGE =================
   const sendMessage = () => {
-    if (!socket || !newMessage.trim()) return;
 
+    if (!socket || !newMessage.trim()) return;
     if (!isGroup) {
       socket.emit("send-message", {
         type: "private",
         toUsername: userName,
         content: newMessage,
+        replyOnId: replyToMessage ? replyToMessage.id : undefined, // 👈 add this
       });
     } else {
       socket.emit("send-message", {
         type: "group",
         chatId: Number(chatId),
         content: newMessage,
+        replyOnId: replyToMessage ? replyToMessage.id : undefined, // 👈 add this
+        
       });
     }
 
     setNewMessage("");
+    setReplyToMessage(null);
   };
 
+  
   // ================= UI =================
   return (
     <div className="space-y-4 p-2">
@@ -247,6 +269,16 @@ const time = formatMessageTime(msg.createdAt);
           {msg.sender}
         </span>
       )}
+      <div>
+      {msg.replyOn && (
+        <div className="border-l-2 border-gray-400 pl-2 mb-1">
+       
+          <p className="text-sm italic text-gray-600">
+            {msg.replyOn.content}
+          </p>
+        </div>
+      )}
+      </div>
 
       <div
         className={`px-3 py-2 rounded-xl text-sm max-w-[70%] ${
@@ -255,8 +287,9 @@ const time = formatMessageTime(msg.createdAt);
             : "bg-gray-200 text-black"
         }`}
       >
-        {msg.content}
+        {msg.content} 
       </div>
+      <button onClick={() => setReplyToMessage({ id: Number(msg.id), content: msg.content, sender: msg.sender })}>Replay</button>
       {!isGroup && msg.sender === myUsername && (
         msg.id && <MessageMenu messageId={msg.id} messageContent={msg.content} />
       )}    
@@ -279,6 +312,19 @@ const time = formatMessageTime(msg.createdAt);
       </div>
 
       {/* ================= INPUT ================= */}
+      {replyToMessage !== null && (
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-sm text-gray-500">
+            Replying to message: {replyToMessage.content} {replyToMessage.sender && `from ${replyToMessage.sender}`}
+          </span>
+          <button
+            onClick={() => setReplyToMessage(null)}
+            className="text-red-500 hover:text-red-700"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
       <div className="flex gap-2">
         <input
           value={newMessage}

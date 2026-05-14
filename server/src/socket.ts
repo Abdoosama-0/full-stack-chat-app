@@ -65,9 +65,17 @@ socket.on(
     chatId?: number;
     toUsername?: string;
     content: string;
+    replyOnId?: number; // 👈 add this
   }) => {
     try {
-      const { type, chatId, toUsername, content } = data;
+      const {
+    type,
+    chatId,
+    toUsername,
+    content,
+    replyOnId, // 👈 add this
+  } = data;
+
 
       if (!content) return;
 
@@ -87,6 +95,7 @@ socket.on(
 
         let chat = await prisma.chat.findFirst({
           where: {
+            isGroup: false,
             AND: [
               { members: { some: { userId: fromUser.userId } } },
               { members: { some: { userId: receiver.id } } },
@@ -95,6 +104,7 @@ socket.on(
         });
 
         if (!chat) {
+
           chat = await prisma.chat.create({
             data: {
               members: {
@@ -115,7 +125,19 @@ socket.on(
             chatId: chat.id,
             senderId: fromUser.userId,
             content,
+                replyOnId: replyOnId ? BigInt(replyOnId) : null, // 👈 important
+
           },
+  include: {
+    replyOn: {
+      select: {
+        id: true,
+        content: true,
+        senderId: true,
+      },
+    },
+  },
+          
         });
 
         console.log("Message created:", message.id);
@@ -157,12 +179,21 @@ io.to(`user:${fromUser.username}`).emit("chat-seen-updated", {
         // =========================
         // SOCKET PAYLOAD
         // =========================
-        const payload = {
-          chatId: chat.id,
-          from: fromUser.username,
-          content,
-          createdAt: message.createdAt,
-        };
+     const payload = {
+  chatId: Number(chat.id || chatId),
+  id: Number(message.id),
+  from: fromUser.username,
+  content: message.content,
+  createdAt: message.createdAt,
+
+  replyOn: message.replyOn
+    ? {
+        id: Number(message.replyOn.id),
+        content: message.replyOn.content,
+        senderId: Number(message.replyOn.senderId),
+      }
+    : null,
+};
 
         io.to(`user:${receiver.username}`).emit("new-message", payload);
         io.to(`user:${fromUser.username}`).emit("new-message", payload);
@@ -203,12 +234,26 @@ if (type === "group") {
   // =========================
   // CREATE MESSAGE
   // =========================
+  
   const message = await prisma.message.create({
     data: {
       chatId,
       senderId: fromUser.userId,
       content,
+          replyOnId: replyOnId ? BigInt(replyOnId) : null, // 👈 important
+
+    },include: {
+    replyOn: {
+      select: {
+        id: true,
+        content: true,
+        senderId: true,
+      },
     },
+  },
+
+
+
   });
 
   console.log("Group message created:", message.id);
@@ -267,12 +312,20 @@ if (type === "group") {
   };
 
   const messagePayload = {
-    chatId: Number(chatId),
-    from: fromUser.username,
-    content: message.content,
-    createdAt: message.createdAt,
-    isGroup: true,
-  };
+  chatId: Number(chat.id || chatId),
+  id: Number(message.id),
+  from: fromUser.username,
+  content: message.content,
+  createdAt: message.createdAt,
+
+  replyOn: message.replyOn
+    ? {
+        id: Number(message.replyOn.id),
+        content: message.replyOn.content,
+        senderId: Number(message.replyOn.senderId),
+      }
+    : null,
+};
 
   // =========================
   // EMIT TO ALL MEMBERS

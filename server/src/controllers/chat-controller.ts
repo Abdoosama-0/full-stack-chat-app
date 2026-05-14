@@ -56,28 +56,59 @@ export const getChatHistory = async (req: AuthRequest, res: Response) => {
     });
 
     // 3️⃣ get ALL messages (NO pagination)
-    const messages = await prisma.message.findMany({
-      where: { chatId },
-      orderBy: { createdAt: "asc" }, // ترتيب طبيعي للشات
-      include: {
+const messages = await prisma.message.findMany({
+  where: { chatId },
+  orderBy: { createdAt: "asc" },
+
+  include: {
+    sender: {
+      select: {
+        username: true,
+      },
+    },
+
+    replyOn: {
+      select: {
+        id: true,
+        content: true,
+        senderId: true,
+
         sender: {
-          select: { username: true },
+          select: {
+            username: true,
+          },
         },
       },
-    });
+    },
+  },
+});
 
     // 4️⃣ format messages
-    const safeMessages = messages.map((m) => ({
-      id: m.id.toString(),
-      chatId: m.chatId.toString(),
-      senderId: m.senderId.toString(),
-      content: m.content,
-      type: m.type,
-      createdAt: m.createdAt,
-      sender: {
-        username: m.sender.username,
-      },
-    }));
+const safeMessages = messages.map((m) => ({
+  id: m.id.toString(),
+  chatId: m.chatId.toString(),
+  senderId: m.senderId.toString(),
+
+  content: m.content,
+  type: m.type,
+  createdAt: m.createdAt,
+
+  sender: {
+    username: m.sender.username,
+  },
+
+  replyOn: m.replyOn
+    ? {
+        id: m.replyOn.id.toString(),
+        content: m.replyOn.content,
+        senderId: m.replyOn.senderId.toString(),
+
+        sender: {
+          username: m.replyOn.sender.username,
+        },
+      }
+    : null,
+}));
 
     // 5️⃣ response
     return res.json({

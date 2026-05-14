@@ -67,12 +67,19 @@ model ChatMember {
 // MESSAGES
 //////////////////////
 model Message {
-  id        BigInt     @id @default(autoincrement())
-  chatId   Int
-  senderId Int
-  content  String
-  type     MessageType @default(TEXT)
-  createdAt DateTime   @default(now())
+  id         BigInt      @id @default(autoincrement())
+  chatId     Int
+  senderId   Int
+  content    String
+  type       MessageType @default(TEXT)
+  createdAt  DateTime    @default(now())
+
+  // reply
+  replyOnId BigInt?
+
+  replyOn Message? @relation("MessageReply", fields: [replyOnId], references: [id])
+
+  replies Message[] @relation("MessageReply")
 
   // relations
   chat     Chat      @relation(fields: [chatId], references: [id], onDelete: Cascade)
