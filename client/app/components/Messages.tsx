@@ -333,6 +333,11 @@ const time = formatMessageTime(msg.createdAt);
       )}
       <div className="flex gap-2">
         <input
+                   onKeyDown={(e) => {
+    if (e.key === "Enter") {
+      sendMessage();
+    }
+  }}
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           className="flex-1 border rounded-lg px-3 py-2"
@@ -341,7 +346,8 @@ const time = formatMessageTime(msg.createdAt);
 
         <button
           onClick={sendMessage}
-          className="bg-blue-500 text-white px-4 rounded-lg"
+
+          className="app-btn-primary text-white px-4 rounded-lg"
         >
           <HiOutlinePaperAirplane />
         </button>
