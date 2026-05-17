@@ -1,5 +1,5 @@
 import React from 'react'
-import { CiMenuKebab } from 'react-icons/ci'
+import { HiOutlineEllipsisVertical } from 'react-icons/hi2'
 import DeleteChat from './DeleteChat';
 
 const ChatMenu = ({ chatId }: { chatId: number }) => {
@@ -12,7 +12,7 @@ const ChatMenu = ({ chatId }: { chatId: number }) => {
         className="inline-flex size-9 items-center justify-center rounded-full border border-border/70 bg-background text-muted-foreground transition hover:border-primary/40 hover:bg-accent/50 hover:text-foreground"
         aria-label="Open chat menu"
       >
-        <CiMenuKebab size={22} />
+        <HiOutlineEllipsisVertical className="size-5" aria-hidden />
       </button>
 
       {clicked && (

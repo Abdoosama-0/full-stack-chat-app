@@ -1,6 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
+import {
+  HiOutlineCheck,
+  HiOutlineUserGroup,
+  HiOutlineXMark,
+} from "react-icons/hi2";
 import { useUserData } from "../store/userData";
 import SearchForGroup from "./SearchForGroup";
 
@@ -74,21 +79,22 @@ const CreateGroup = () => {
     <div>
       <button
         onClick={() => setClicked(true)}
-        className="rounded bg-blue-500 px-4 py-2 text-white"
+        className="app-btn-primary h-9 w-full px-3 text-xs sm:w-auto sm:text-sm"
       >
+        <HiOutlineUserGroup className="size-4 shrink-0" aria-hidden />
         Create Group
       </button>
 
       {clicked && (
         <div
           onClick={() => setClicked(false)}
-          className="fixed inset-0 z-40 flex items-center justify-center bg-black/70"
+          className="app-modal-overlay z-40"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-[400px] rounded-xl bg-white p-4 space-y-4"
+            className="app-modal-panel max-h-[90vh] overflow-y-auto"
           >
-            <h2 className="text-lg font-bold">Create Group</h2>
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">Create Group</h2>
 
             {/* 🏷️ Group Name */}
             <input
@@ -96,10 +102,9 @@ const CreateGroup = () => {
               placeholder="Group name"
               value={groupName}
               onChange={(e) => setGroupName(e.target.value)}
-              className="w-full rounded border p-2"
+              className="app-input"
             />
 
-            {/* 🖼️ Group Image */}
             <input
               type="file"
               accept="image/*"
@@ -108,7 +113,7 @@ const CreateGroup = () => {
                   setGroupImage(e.target.files[0]);
                 }
               }}
-              className="w-full"
+              className="block w-full rounded-xl border border-border/70 bg-background px-3 py-2 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-xs file:font-semibold file:text-primary hover:file:bg-primary/20"
             />
 
             <SearchForGroup setUsernames={setUsernames} />
@@ -118,32 +123,38 @@ const CreateGroup = () => {
               {usernames.map((u) => (
                 <div
                   key={u}
-                  className="flex items-center gap-2 rounded bg-gray-200 px-2 py-1"
+                  className="flex items-center gap-2 rounded-full border border-border/70 bg-muted/50 px-3 py-1 text-sm"
                 >
-                  <span>{u}</span>
+                  <span className="font-medium text-foreground">{u}</span>
                   <button
+                    type="button"
                     onClick={() => removeUser(u)}
-                    className="text-red-500"
+                    className="inline-flex size-6 items-center justify-center rounded-full text-destructive transition hover:bg-destructive/10 hover:text-destructive"
+                    aria-label={`Remove ${u}`}
                   >
-                    ✕
+                    <HiOutlineXMark className="size-3.5" aria-hidden />
                   </button>
                 </div>
               ))}
             </div>
 
             {/* 🎯 Actions */}
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
               <button
+                type="button"
                 onClick={() => setClicked(false)}
-                className="rounded bg-gray-400 px-3 py-1 text-white"
+                className="app-btn-secondary"
               >
+                <HiOutlineXMark className="size-4" aria-hidden />
                 Cancel
               </button>
 
               <button
+                type="button"
                 onClick={handleSubmit}
-                className="rounded bg-blue-600 px-3 py-1 text-white"
+                className="app-btn-primary"
               >
+                <HiOutlineCheck className="size-4" aria-hidden />
                 Create
               </button>
             </div>

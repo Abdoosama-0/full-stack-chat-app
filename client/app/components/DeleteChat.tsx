@@ -1,4 +1,5 @@
 import React from "react";
+import { HiOutlineTrash } from "react-icons/hi2";
 import { useUserData } from "../store/userData";
 
 const DeleteChat = ({ chatId }: { chatId: number }) => {
@@ -34,9 +35,11 @@ const DeleteChat = ({ chatId }: { chatId: number }) => {
 
   return (
     <button
+      type="button"
       onClick={handleDeleteChat}
-
+      className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm text-destructive transition hover:bg-destructive/10"
     >
+      <HiOutlineTrash className="size-4 shrink-0" aria-hidden />
       Delete Chat
     </button>
   );

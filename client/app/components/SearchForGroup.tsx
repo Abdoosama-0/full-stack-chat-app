@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { HiOutlineMagnifyingGlass, HiOutlineUserPlus } from "react-icons/hi2";
 import { useUserData } from "../store/userData";
 
 interface SearchForGroupProps {
@@ -56,26 +57,32 @@ const SearchForGroup = ({ setUsernames }: SearchForGroupProps) => {
   return (
     <div className="space-y-2">
       {/* 🔍 search input */}
-      <input
-        value={query}
-        onChange={(e) => searchUsers(e.target.value)}
-        placeholder="Search users..."
-        className="w-full border p-2 rounded"
-      />
+      <div className="relative">
+        <HiOutlineMagnifyingGlass
+          className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
+          aria-hidden
+        />
+        <input
+          value={query}
+          onChange={(e) => searchUsers(e.target.value)}
+          placeholder="Search users..."
+          className="app-input pl-10"
+        />
+      </div>
 
-      {/* 📋 results */}
-      <div className="max-h-40 overflow-y-auto space-y-1">
+      <div className="max-h-40 space-y-1 overflow-y-auto rounded-xl border border-border/60 bg-muted/20 p-1">
         {results.map((user) => (
           <div
             key={user.id}
             onClick={() => addUser(user.username)}
-            className="flex items-center gap-2 p-2 hover:bg-gray-100 cursor-pointer rounded"
+            className="flex cursor-pointer items-center gap-2 rounded-lg p-2 transition hover:bg-primary/10"
           >
             <img
               src={user.avatar || "/default-avatar.png"}
-              className="w-6 h-6 rounded-full"
+              className="size-7 rounded-full border border-border/70 object-cover"
             />
-            <span>{user.username}</span>
+            <span className="min-w-0 flex-1 truncate text-sm font-medium">{user.username}</span>
+            <HiOutlineUserPlus className="size-4 shrink-0 text-primary opacity-70" aria-hidden />
           </div>
         ))}
       </div>

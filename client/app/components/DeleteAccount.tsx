@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { HiOutlineTrash } from "react-icons/hi2";
 import { useUserData } from "../store/userData";
 
 const DeleteAccount = () => {
@@ -56,8 +57,9 @@ const DeleteAccount = () => {
     <button
       onClick={handleClick}
       disabled={loading}
-      className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+      className="inline-flex h-10 items-center justify-center rounded-xl border border-destructive/50 bg-destructive px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-destructive/90 disabled:cursor-not-allowed disabled:opacity-50"
     >
+      <HiOutlineTrash className="size-4 shrink-0" aria-hidden />
       {loading ? "Deleting..." : "Delete Account"}
     </button>
   );

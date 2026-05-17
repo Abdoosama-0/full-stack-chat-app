@@ -132,7 +132,8 @@ const { token } = useUserData();
       fetchChatData(user);
     }
   return (
-    <div className="w-full space-y-3">
+    <div className="w-full space-y-3 border-b border-border/70 pb-4">
+      <h3 className="text-sm font-semibold text-foreground">Find people</h3>
       <div className="relative">
         <HiOutlineMagnifyingGlass
           className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"

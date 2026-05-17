@@ -8,18 +8,18 @@ const Account = () => {
      const { avatar } = useUserData();
   
   return (
-    
- <Link href="/account"> 
- 
-
- 
-                        {avatar && (
-  <img
-    src={avatar || "/default-avatar.png"}
-    alt="Avatar"
-    className="w-10 h-10 rounded-full object-cover border border-gray-300"
-  />
-)}</Link>  
+    <Link
+      href="/account"
+      className="inline-flex shrink-0 overflow-hidden rounded-full ring-2 ring-border/80 transition hover:ring-primary/40"
+    >
+      {avatar && (
+        <img
+          src={avatar || "/default-avatar.png"}
+          alt="Avatar"
+          className="size-9 object-cover sm:size-10"
+        />
+      )}
+    </Link>
   )
 }
 

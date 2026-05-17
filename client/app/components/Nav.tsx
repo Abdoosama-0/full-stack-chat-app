@@ -12,36 +12,35 @@ const Nav = () => {
    
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border/80 bg-card/80 shadow-sm backdrop-blur-md">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-20 border-b border-border/80 bg-card/90 shadow-sm backdrop-blur-md supports-[backdrop-filter]:bg-card/75">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:gap-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
          
 
-                   <Link className='flex items-center gap-2' href="/">
+          <Link className="flex min-w-0 items-center gap-2.5 transition-opacity hover:opacity-90" href="/">
        
              
          
-            <span className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-violet-500 text-primary-foreground shadow-md shadow-primary/25">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/25 sm:size-10">
             <HiOutlineChatBubbleLeftRight className="size-5" aria-hidden />
           </span>
-           <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">Chat App</h1>
+            <h1 className="truncate text-lg font-semibold tracking-tight text-foreground sm:text-xl">Chat App</h1>
             </Link>
        
          
         </div>
         {token && (
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-   
-            <div className=" bg-background/70 px-3 py-2 text-sm font-medium text-foreground">
+          <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:gap-3">
+            <div className="hidden max-w-[10rem] truncate rounded-full border border-border/70 bg-muted/50 px-3 py-1.5 text-sm font-medium text-foreground sm:block sm:max-w-[14rem]">
               {userName}
-                   </div>
+            </div>
 
        
             <Account />
             <Logout />
           </div>
         )}
-<h1 >{token}</h1>
+
       </div>
     </header>
   )

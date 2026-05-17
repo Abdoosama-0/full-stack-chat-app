@@ -4,8 +4,11 @@ import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import {
   HiOutlineEnvelope,
+  HiOutlineEye,
+  HiOutlineEyeSlash,
   HiOutlineLockClosed,
   HiOutlineUser,
+  HiOutlineUserPlus,
 } from "react-icons/hi2";
 
 const Register = () => {
@@ -63,10 +66,10 @@ const Register = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-primary/5 to-violet-200/25 px-4 py-12">
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-gradient-to-b from-background via-muted/30 to-primary/5 px-4 py-12">
       <form
         onSubmit={handleRegister}
-        className="w-full max-w-md space-y-5 rounded-2xl border border-border/70 bg-card/95 p-8 shadow-xl shadow-primary/10 backdrop-blur-sm"
+        className="app-card w-full max-w-md space-y-5 p-6 shadow-xl shadow-primary/10 sm:p-8"
       >
         <div className="space-y-1 text-center">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
@@ -117,9 +120,14 @@ const Register = () => {
           <button
             type="button"
             onClick={() => setShowPassword((prev) => !prev)}
-            className="absolute right-2 top-1/2 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-lg text-xs font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
+            className="absolute right-2 top-1/2 flex size-9 -translate-y-1/2 items-center justify-center rounded-lg text-primary transition hover:bg-accent"
+            aria-label={showPassword ? "Hide password" : "Show password"}
           >
-            {showPassword ? "Hide" : "Show"}
+            {showPassword ? (
+              <HiOutlineEyeSlash className="size-5" aria-hidden />
+            ) : (
+              <HiOutlineEye className="size-5" aria-hidden />
+            )}
           </button>
         </div>
 
@@ -148,8 +156,9 @@ const Register = () => {
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-gradient-to-r from-primary to-violet-500 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/25 transition hover:from-primary/90 hover:to-violet-500/90 disabled:cursor-not-allowed disabled:opacity-50"
+          className="app-btn-primary w-full"
         >
+          <HiOutlineUserPlus className="size-4" aria-hidden />
           {loading ? "Registering..." : "Register"}
         </button>
       </form>

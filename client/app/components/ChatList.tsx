@@ -287,13 +287,13 @@ socket.on("new-chat", handleNewChat);
                   setIsCurrentUserAdmin?.(!!chat.isCurrentUserAdmin);
                 }
               }}
-      className={`group flex cursor-pointer items-start gap-3 rounded-2xl border p-3 shadow-sm transition hover:border-primary/35 hover:shadow-md
+      className={`group flex cursor-pointer items-start gap-3 rounded-2xl border p-3 shadow-sm transition duration-200 hover:border-primary/35 hover:bg-accent/20 hover:shadow-md
 ${
   chat.lastMessage?.id == null
     ? "border-border/75 bg-card/90"
     : Number(chat.lastMessage?.id) === Number(chat.lastSeenMessageId)
     ? "border-border/75 bg-card/90"
-    : "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+    : "border-primary/40 bg-primary/10 shadow-sm shadow-primary/10"
 }`}
             >
               {/* Avatar */}
@@ -336,7 +336,7 @@ ${
                 <p className=" flex justify-between items-center truncate text-sm font-semibold text-foreground">
                   {displayName}
                   {chat.isGroup && (
-                    <span className="ml-2 rounded-full bg-slate-300 px-2 py-1 text-xs font-medium text-white">
+                    <span className="ml-2 shrink-0 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
                       Group
                     </span>
                   )}

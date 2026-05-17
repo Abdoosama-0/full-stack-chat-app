@@ -7,6 +7,7 @@ import { useChatStore } from "../store/chatStore";
 import { HiOutlinePaperAirplane } from "react-icons/hi2";
 import MessageMenu from "./MessageMenu";
 import { useSelectedUserStore } from "../store/selectedUser";
+import { FaReply } from "react-icons/fa";
 
 interface MessagesProps {
   chatId: string | null;
@@ -283,29 +284,34 @@ const time = formatMessageTime(msg.createdAt);
       <div
         className={`px-3 py-2 rounded-xl text-sm max-w-[70%] ${
           isMe
-            ? "bg-blue-500 text-white"
+            ? "bg-primary text-white"
             : "bg-gray-200 text-black"
         }`}
       >
         {msg.content} 
       </div>
-      <button onClick={() => setReplyToMessage({ id: Number(msg.id), content: msg.content, sender: msg.sender })}>Replay</button>
+      <div className="flex">  
+
+      <button onClick={() => setReplyToMessage({ id: Number(msg.id), content: msg.content, sender: msg.sender })}><FaReply />
+      
+      </button>
       {!isGroup && msg.sender === myUsername && (
-        msg.id && <MessageMenu messageId={msg.id} messageContent={msg.content} />
+        
+        msg.id && <MessageMenu messageId={msg.id} messageContent={msg.content} isMe={isMe?"yes":"no"} />
       )}    
 
 
         {
         isGroup &&  isCurrentUserAdmin && 
-       (msg.id && <MessageMenu messageId={msg.id} />) 
+       (msg.id && <MessageMenu messageId={msg.id}  isMe={isMe?"yes":"no"} />) 
        ||
           isGroup &&   msg.sender === myUsername && 
-       (msg.id && <MessageMenu messageId={msg.id} />) 
+       (msg.id && <MessageMenu messageId={msg.id} isMe={isMe?"yes":"no"}/>) 
 
       }  
       
       
-      
+      </div>
       </div>
   );
 })}

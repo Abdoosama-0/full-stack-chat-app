@@ -3,7 +3,13 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import{useUserData} from "../../store/userData"
-import { HiOutlineEnvelope, HiOutlineEye, HiOutlineEyeSlash, HiOutlineLockClosed } from "react-icons/hi2";
+import {
+  HiOutlineArrowRightEndOnRectangle,
+  HiOutlineEnvelope,
+  HiOutlineEye,
+  HiOutlineEyeSlash,
+  HiOutlineLockClosed,
+} from "react-icons/hi2";
 import Link from "next/dist/client/link";
 const Login = () => {
   const router = useRouter();
@@ -60,11 +66,11 @@ alert("Login successful! Welcome, " + data.avatar);
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background via-primary/5 to-violet-200/25 px-4 py-12">
+    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-gradient-to-b from-background via-muted/30 to-primary/5 px-4 py-12">
       <div className="w-full max-w-md space-y-4">
         <form
           onSubmit={handleLogin}
-          className="flex w-full flex-col gap-5 rounded-2xl border border-border/70 bg-card/95 p-8 shadow-xl shadow-primary/10 backdrop-blur-sm"
+          className="app-card flex w-full flex-col gap-5 p-6 shadow-xl shadow-primary/10 sm:p-8"
         >
           <div className="space-y-1 text-center">
             <h2 className="text-2xl font-semibold tracking-tight text-foreground">
@@ -124,8 +130,9 @@ alert("Login successful! Welcome, " + data.avatar);
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex h-11 items-center justify-center rounded-xl bg-gradient-to-r from-primary to-violet-500 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/25 transition hover:from-primary/90 hover:to-violet-500/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="app-btn-primary w-full"
           >
+            <HiOutlineArrowRightEndOnRectangle className="size-4" aria-hidden />
             {loading ? "Loading..." : "Login"}
           </button>
         </form>

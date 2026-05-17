@@ -1,13 +1,19 @@
 import React from "react";
-import { CiMenuKebab } from "react-icons/ci";
+import {
+  HiOutlineCheck,
+  HiOutlineEllipsisVertical,
+  HiOutlinePencil,
+  HiOutlineTrash,
+} from "react-icons/hi2";
 import { useUserData } from "../store/userData";
 
 interface Props {
   messageId: number | string;
   messageContent?: string;
+  isMe?:string
 }
 
-const MessageMenu = ({ messageId, messageContent }: Props) => {
+const MessageMenu = ({ messageId, messageContent ,isMe}: Props) => {
   const [clicked, setClicked] = React.useState(false);
   const [editMode, setEditMode] = React.useState(false);
   const [newContent, setNewContent] = React.useState(messageContent || "");
@@ -85,40 +91,50 @@ const MessageMenu = ({ messageId, messageContent }: Props) => {
 
   return (
     <div className="relative">
-      <CiMenuKebab
+      <button
+        type="button"
         onClick={() => setClicked((prev) => !prev)}
-        className="cursor-pointer"
-      />
+        className="app-icon-btn"
+        aria-label="Message options"
+        title="Options"
+      >
+        <HiOutlineEllipsisVertical className="size-5" aria-hidden />
+      </button>
 
       {clicked && (
-        <div className="absolute right-0 mt-2 w-32 bg-white border rounded-md shadow-lg z-50">
+        <div className={`absolute ${isMe=== "yes" ? "right-0": "left-0"}  z-50 mt-2 w-40 overflow-hidden rounded-xl border border-border/70 bg-popover p-1 shadow-lg`}>
           <button
+            type="button"
             onClick={handleDelete}
-            className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-destructive transition hover:bg-destructive/10"
           >
-            Delete
+            <HiOutlineTrash className="size-4 shrink-0" aria-hidden />
+            Delete {isMe}
           </button>
-    
+
           <button
+            type="button"
             onClick={() => setEditMode(true)}
-            className="block w-full text-left px-4 py-2 hover:bg-gray-100"
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-accent"
           >
+            <HiOutlinePencil className="size-4 shrink-0" aria-hidden />
             Edit
           </button>
           {editMode && (
 
-            <div onClick={()=>setEditMode(false)} className=" fixed inset-0 flex items-center justify-center bg-black/90">
-            <div  onClick={(e) => e.stopPropagation()} className="p-2 bg-white rounded">
+            <div onClick={()=>setEditMode(false)} className="app-modal-overlay">
+            <div  onClick={(e) => e.stopPropagation()} className="app-modal-panel flex flex-col gap-3 sm:flex-row sm:items-center">
               <input
                 type="text"
                 value={newContent}
                 onChange={(e) => setNewContent(e.target.value)}
-                className="border rounded-md px-2 py-1"
+                className="app-input flex-1"
               />
-              <button onClick={handleEdit} className="ml-2 bg-blue-500 text-white px-3 py-1 rounded">
+              <button type="button" onClick={handleEdit} className="app-btn-primary shrink-0">
+                <HiOutlineCheck className="size-4" aria-hidden />
                 Save
               </button>
-          
+
           </div>
             </div>
             

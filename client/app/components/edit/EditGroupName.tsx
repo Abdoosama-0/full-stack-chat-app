@@ -1,6 +1,6 @@
 
 import React from "react";
-import { CiMenuKebab } from "react-icons/ci";
+import { HiOutlineCheck } from "react-icons/hi2";
 import { useUserData } from "../../store/userData";
 import { MdEdit } from "react-icons/md";
 
@@ -61,7 +61,7 @@ const EditGroupName = ({ chatId, chatName }: Props) => {
       <MdEdit 
 
         onClick={() => setClicked(true)}
-        className="cursor-pointer"
+        className="cursor-pointer text-muted-foreground transition hover:text-primary"
       />
 
       {clicked && (
@@ -70,15 +70,16 @@ const EditGroupName = ({ chatId, chatName }: Props) => {
     
      
 
-            <div onClick={()=>setClicked(false)} className=" fixed inset-0 flex items-center justify-center bg-black/90">
-            <div  onClick={(e) => e.stopPropagation()} className="p-2 bg-white rounded">
+            <div onClick={()=>setClicked(false)} className="app-modal-overlay">
+            <div onClick={(e) => e.stopPropagation()} className="app-modal-panel flex flex-col gap-3 sm:flex-row sm:items-center">
               <input
                 type="text"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                className="border rounded-md px-2 py-1"
+                className="app-input flex-1"
               />
-              <button onClick={handleEdit} className="ml-2 bg-blue-500 text-white px-3 py-1 rounded">
+              <button type="button" onClick={handleEdit} className="app-btn-primary shrink-0">
+                <HiOutlineCheck className="size-4" aria-hidden />
                 Save
               </button>
           

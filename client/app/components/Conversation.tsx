@@ -40,8 +40,8 @@ const Conversation = (props: ConversationProps) => {
   
   if (selectedChatId == "-1") {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center gap-3 rounded-2xl border border-dashed border-primary/30 bg-primary/5 px-4 py-3 text-sm font-medium text-foreground">
+      <div className="flex min-h-0 flex-1 flex-col gap-4">
+        <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-dashed border-primary/30 bg-primary/5 px-4 py-3 text-sm font-medium text-foreground">
           <HiOutlineChatBubbleLeftRight className="size-5 text-primary" aria-hidden />
           <div className="flex size-9 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-muted/60">
             {selectedUserAvatar ? (
@@ -65,7 +65,7 @@ const Conversation = (props: ConversationProps) => {
   } else if (selectedChatId !== null && selectedChatId !== "-1") {
  
     return (
-      <div className="space-y-4">
+      <div className="flex min-h-0 flex-1 flex-col gap-4">
         <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border/70 bg-muted/35 px-4 py-3 text-sm text-foreground">
           <HiOutlineChatBubbleLeftRight className="size-5 text-primary" aria-hidden />
           <button
@@ -110,7 +110,7 @@ const Conversation = (props: ConversationProps) => {
     );
   } else {
     return (
-      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-border/80 bg-muted/20 px-6 py-12 text-center">
+      <div className="flex min-h-[min(40vh,20rem)] flex-1 flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-border/80 bg-muted/20 px-6 py-12 text-center">
         <HiOutlineChatBubbleLeftRight className="size-10 text-muted-foreground/60" aria-hidden />
         <p className="text-sm font-medium text-muted-foreground">No chat selected</p>
       </div>

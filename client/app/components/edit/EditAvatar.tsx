@@ -57,7 +57,7 @@ window.location.reload(); // reload the page to show the new avatar
       {/* Icon */}
       <MdEdit
         size={20}
-        className="cursor-pointer"
+        className="cursor-pointer text-primary transition hover:text-primary/80"
         onClick={handleClick}
       />
 

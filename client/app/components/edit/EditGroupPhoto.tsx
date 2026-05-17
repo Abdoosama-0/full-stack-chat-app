@@ -78,7 +78,7 @@ const EditGroupPhoto = ({ chatId }: Props) => {
       {/* edit icon */}
       <button
         onClick={handleClick}
-        className="rounded-full bg-black/60 p-2 text-white"
+        className="rounded-full border border-border/70 bg-card/90 p-2 text-foreground shadow-sm transition hover:bg-accent"
       >
         <MdEdit />
       </button>
@@ -94,30 +94,31 @@ const EditGroupPhoto = ({ chatId }: Props) => {
 
       {/* preview modal */}
       {preview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
-          <div className="w-[300px] space-y-3 rounded-xl bg-white p-4">
-            
+        <div className="app-modal-overlay z-50">
+          <div className="app-modal-panel w-full max-w-sm">
             <img
               src={preview}
               alt="preview"
-              className="h-40 w-full rounded-lg object-cover"
+              className="h-40 w-full rounded-xl object-cover"
             />
 
-            <div className="flex justify-between gap-2">
+            <div className="flex gap-2">
               <button
+                type="button"
                 onClick={() => {
                   setPreview(null);
                   setFile(null);
                 }}
-                className="w-full rounded bg-gray-400 px-3 py-1 text-white"
+                className="app-btn-secondary flex-1"
               >
                 Cancel
               </button>
 
               <button
+                type="button"
                 onClick={handleUpload}
                 disabled={loading}
-                className="w-full rounded bg-blue-600 px-3 py-1 text-white"
+                className="app-btn-primary flex-1"
               >
                 {loading ? "Uploading..." : "Save"}
               </button>

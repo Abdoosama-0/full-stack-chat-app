@@ -61,51 +61,53 @@ const ChatMembers = ({ chatId }: Props) => {
     <div>
       <button
         onClick={openModal}
-        className="rounded bg-blue-500 px-4 py-2 text-white"
+        className="app-btn-secondary text-xs sm:text-sm"
       >
-        chat members
+        Chat members
       </button>
 
       {clicked && (
         <div
           onClick={() => setClicked(false)}
-          className="fixed inset-0 z-40 flex items-center justify-center bg-black/70"
+          className="app-modal-overlay z-40"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-[400px] rounded-xl bg-white p-4 space-y-4"
+            className="app-modal-panel max-h-[90vh] overflow-y-auto"
           >
-            <h2 className="text-lg font-bold">Group Members</h2>
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">
+              Group Members
+            </h2>
 
             {members.length === 0 ? (
-              <p className="text-sm text-gray-500">No members</p>
+              <p className="text-sm text-muted-foreground">No members</p>
             ) : (
               <div className="space-y-2">
                 {members.map((m) => (
                   <div
                     key={m.userId}
-                    className="flex items-center gap-3 rounded-lg border p-2"
+                    className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/30 p-2.5"
                   >
                     {m.avatar ? (
                       <img
                         src={m.avatar}
-                        className="h-8 w-8 cursor-zoom-in rounded-full"
+                        className="size-9 cursor-zoom-in rounded-full border border-border/70 object-cover"
                         onClick={() => previewPhoto(m.avatar)}
                       />
                     ) : (
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
+                      <div className="flex size-9 items-center justify-center rounded-full bg-muted text-sm font-semibold text-muted-foreground">
                         {m.username[0]}
                       </div>
                     )}
 
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium text-foreground">
                         {m.username}
                       </p>
 
                       {m.isAdmin && (
-                        <p className="text-xs text-blue-500">
-                          admin
+                        <p className="text-xs font-medium text-primary">
+                          Admin
                         </p>
                       )}
                     </div>

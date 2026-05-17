@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { CiMenuKebab } from "react-icons/ci";
+import { HiOutlineEllipsisVertical } from "react-icons/hi2";
 import { useChatStore } from "../store/chatStore";
 import { useUserData } from "../store/userData";
 import EditGroupPhoto from "./edit/EditGroupPhoto";
@@ -53,25 +53,29 @@ const [isAdmin, setIsAdmin] = useState(false);
 
   return (
     <div>
-      <CiMenuKebab
+      <button
+        type="button"
         onClick={() => {
           setClicked(true);
           handleClick();
         }}
-        className="cursor-pointer"
-      />
+        className="app-icon-btn"
+        aria-label="Group details"
+        title="Group details"
+      >
+        <HiOutlineEllipsisVertical className="size-5" aria-hidden />
+      </button>
 
       {clicked && (
         <div
           onClick={() => setClicked(false)}
-          className="fixed inset-0 flex items-center justify-center bg-black/80"
+          className="app-modal-overlay"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-[380px] rounded-xl bg-white p-4 space-y-4"
+            className="app-modal-panel max-h-[90vh] w-full max-w-md overflow-y-auto"
           >
-            {/* ===== HEADER ===== */}
-            <h2 className="text-lg font-semibold">Group Details</h2>
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">Group Details</h2>
 
           
 
@@ -86,7 +90,7 @@ const [isAdmin, setIsAdmin] = useState(false);
                   group?.chatPhoto ||
                   "https://static.vecteezy.com/system/resources/previews/026/019/617/non_2x/group-profile-avatar-icon-default-social-media-forum-profile-photo-vector.jpg"
                 }
-                className="h-20 w-20 rounded-full object-cover border"
+                className="size-20 rounded-full border-2 border-border/70 object-cover shadow-sm"
               />             
               {isAdmin && (
                 <EditGroupPhoto chatId={Number(selectedChatId) || 0} />
@@ -108,24 +112,24 @@ const [isAdmin, setIsAdmin] = useState(false);
               {group?.members?.map((m) => (
                 <div
                   key={m.userId}
-                  className="flex items-center gap-3 border p-2 rounded-lg"
+                  className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/30 p-2.5 transition hover:bg-muted/50"
                 >
                   <img
                     src={m.user.avatar}
-                    className="h-10 w-10 rounded-full object-cover"
+                    className="size-10 rounded-full border border-border/70 object-cover"
                   />
 
                   <div className="flex-1">
                     <p className="font-medium">{m.user.username}</p>
-                    <p className="text-xs text-gray-500">{m.user.email}</p>
+                    <p className="text-xs text-muted-foreground">{m.user.email}</p>
                   </div>
 
                   {/* ROLE */}
                   <span
-                    className={`text-xs px-2 py-1 rounded ${
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                       m.isAdmin
-                        ? "bg-green-100 text-green-600"
-                        : "bg-gray-100 text-gray-600"
+                        ? "bg-primary/15 text-primary"
+                        : "bg-muted text-muted-foreground"
                     }`}
                   >
                     {m.isAdmin ? "Admin" : "Member"}

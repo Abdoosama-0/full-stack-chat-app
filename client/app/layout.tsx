@@ -24,17 +24,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className="h-full">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} min-h-screen font-sans antialiased tracking-tight`}
+        className={`${geistSans.variable} ${geistMono.variable} flex min-h-full flex-col font-sans antialiased`}
       >
-       
-
-              <Nav />
+        <Nav />
         <SocketProvider>
-          {children}
+          <main className="flex-1">{children}</main>
         </SocketProvider>
-        
       </body>
     </html>
   );

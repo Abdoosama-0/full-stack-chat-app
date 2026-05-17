@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { HiOutlineCheck, HiOutlinePaperAirplane } from "react-icons/hi2";
 import { MdEdit } from "react-icons/md";
 import { useUserData } from "../../store/userData";
 
@@ -82,35 +83,43 @@ const EditEmail = () => {
 
   return (
     <div className="space-y-3">
-      <MdEdit onClick={() => setStep(1)} size={20} className="cursor-pointer" />
+      <MdEdit
+        onClick={() => setStep(1)}
+        size={20}
+        className="cursor-pointer text-muted-foreground transition hover:text-primary"
+      />
 
-      {/* ================= STEP 1 ================= */}
       {step === 1 && (
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap items-center gap-2">
           <input
             type="email"
             value={email}
             placeholder="Enter new email"
             onChange={(e) => setEmail(e.target.value)}
-            className="border p-1 rounded"
+            className="app-input h-9 min-w-[12rem] flex-1"
           />
 
-          <button onClick={handleSendEmail}>Send OTP</button>
+          <button type="button" onClick={handleSendEmail} className="app-btn-primary h-9 px-4">
+            <HiOutlinePaperAirplane className="size-4" aria-hidden />
+            Send OTP
+          </button>
         </div>
       )}
 
-      {/* ================= STEP 2 ================= */}
       {step === 2 && (
-        <div className="flex gap-2 items-center">
+        <div className="flex flex-wrap items-center gap-2">
           <input
             type="text"
             value={otp}
             placeholder="Enter OTP"
             onChange={(e) => setOtp(e.target.value)}
-            className="border p-1 rounded"
+            className="app-input h-9 min-w-[12rem] flex-1"
           />
 
-          <button onClick={handleVerifyOtp}>Verify</button>
+          <button type="button" onClick={handleVerifyOtp} className="app-btn-primary h-9 px-4">
+            <HiOutlineCheck className="size-4" aria-hidden />
+            Verify
+          </button>
         </div>
       )}
     </div>

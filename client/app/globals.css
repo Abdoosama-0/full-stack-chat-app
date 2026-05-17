@@ -120,7 +120,43 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    scroll-behavior: smooth;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground leading-relaxed antialiased;
+  }
+  h1, h2, h3 {
+    @apply tracking-tight text-foreground;
+  }
+}
+
+@layer utilities {
+  .app-card {
+    @apply rounded-2xl border border-border/70 bg-card/95 shadow-sm backdrop-blur-sm;
+  }
+  .app-input {
+    @apply h-11 w-full rounded-xl border border-input bg-background px-3 text-sm shadow-sm outline-none transition placeholder:text-muted-foreground focus:border-primary/50 focus:ring-4 focus:ring-primary/15;
+  }
+  .app-btn-primary {
+    @apply inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/20 transition hover:bg-primary/90 focus-visible:ring-4 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .app-btn-secondary {
+    @apply inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border/80 bg-background px-4 text-sm font-medium text-foreground shadow-sm transition hover:border-primary/35 hover:bg-accent/50;
+  }
+  .app-btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-2.5 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground;
+  }
+  .app-modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 p-4 backdrop-blur-sm;
+  }
+  .app-modal-panel {
+    @apply w-full max-w-md space-y-4 rounded-2xl border border-border/70 bg-card p-6 shadow-2xl;
+  }
+  .app-icon-btn {
+    @apply inline-flex size-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/15 disabled:pointer-events-none disabled:opacity-50;
+  }
+  .app-icon-btn-primary {
+    @apply inline-flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/20 transition hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50;
   }
 }
