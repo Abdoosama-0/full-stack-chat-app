@@ -25,7 +25,7 @@ const DeleteChat = ({ chatId }: { chatId: number }) => {
 
       // هنا ممكن تعمل refresh أو update state
       // مثال:
-      window.location.reload();
+
       // أو remove chat from UI state
 
     } catch (error: any) {

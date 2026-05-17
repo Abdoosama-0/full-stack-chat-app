@@ -101,7 +101,7 @@ const { selectedChatId } = useChatStore();
     if (token) fetchChats();
   }, [token]);
 
-  // ================= SOCKET =================
+  // ================= handleNewChat =================
   const handleNewChat = (data: any) => {
   setChats((prev) => {
     const exists = prev.some((c) => c.id === data.id);
@@ -112,11 +112,20 @@ const { selectedChatId } = useChatStore();
 };
 
 socket?.on("new-chat", handleNewChat);
+
+
 //============useEffect socit==================
 useEffect(() => {
   if (!socket) return;
+const handleDeleteChat = ({ chatId }: any) => {
+  console.log("###################################################")
+  setChats((prev) =>
+    prev.filter((chat) => Number(chat.id) !== Number(chatId))
+  );
+};
 
-//================
+socket.on("chatDeleted", handleDeleteChat);
+//================group-name-updated
 socket.on("group-name-updated", (data) => {
   setChats((prev) =>
     prev.map((chat) =>
@@ -210,6 +219,7 @@ socket.on("new-chat", handleNewChat);
     socket.off("chat-seen-updated", handleSeenUpdate);
         socket.off("chat-seen-updated", handleSeenUpdate);
           socket.off("new-chat", handleNewChat);
+          socket.off("chatDeleted", handleDeleteChat);
 
 
   };
@@ -349,7 +359,7 @@ ${
 
               {/* Menu */}
               <div onClick={(e) => e.stopPropagation()}>
-                {/* {!chat.isGroup && <ChatMenu chatId={chat.id} />} */}
+                {!chat.isGroup && <ChatMenu chatId={chat.id} />}
            
               </div>
             </div>

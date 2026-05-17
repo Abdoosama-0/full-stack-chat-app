@@ -84,7 +84,8 @@ socket.on(
       // =========================
       if (type === "private") {
         if (!toUsername) return;
-
+          console.log("fromUser         " +fromUser)
+          console.log("toUsername        " +toUsername)
         const receiver = await prisma.user.findUnique({
           where: { username: toUsername },
         });
@@ -104,6 +105,7 @@ socket.on(
         });
 
         if (!chat) {
+          console.log("create new chat")
 
           chat = await prisma.chat.create({
             data: {
@@ -115,6 +117,68 @@ socket.on(
               },
             },
           });
+   const members = await prisma.chatMember.findMany({
+  where: { chatId: chat.id },
+  include: {
+    user: {
+      select: {
+        id: true,
+        username: true,
+        avatar: true,
+      },
+    },
+  },
+});
+const otherMember = members.find(
+  (m) => m.userId !== fromUser.userId
+)?.user;
+
+for (const member of members) {
+  const otherUser = members.find(
+    (m) => m.userId !== member.userId
+  )?.user;
+
+  const chatPayload = {
+    id: chat.id,
+    isGroup: chat.isGroup,
+
+    name: chat.isGroup
+      ? chat.name
+      : otherUser?.username,
+
+    chatPhoto: chat.isGroup
+      ? chat.chatPhoto
+      : otherUser?.avatar,
+
+    lastMessage: null,
+    lastSeenMessageId: null,
+
+    isUpToDate: false,
+    isPrivate: !chat.isGroup,
+
+    otherUser: otherUser
+      ? {
+          id: otherUser.id,
+          username: otherUser.username,
+          avatar: otherUser.avatar ?? undefined,
+        }
+      : null,
+
+    members: members.map((m) => ({
+      userId: m.userId,
+      username: m.user.username,
+      avatar: m.user.avatar ?? undefined,
+    })),
+
+    messages: [],
+  };
+
+  io.to(`user:${member.user.username}`).emit(
+    "new-chat",
+    chatPayload
+  );
+}
+          
         }
 
         // =========================

@@ -206,7 +206,7 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
           : null;
 
         // =========================
-        // member state (🔥 updated)
+        // member state
         // =========================
         const member = await prisma.chatMember.findUnique({
           where: {
@@ -217,7 +217,7 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
           },
           select: {
             lastSeenMessageId: true,
-            isAdmin: true, // 👈 جديد
+            isAdmin: true,
           },
         });
 
@@ -226,7 +226,7 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
           : null;
 
         // =========================
-        // auto seen لو أنا اللي باعت
+        // auto seen
         // =========================
         if (lastMessage && lastMessage.senderId === userId) {
           lastSeenMessageId = lastMessage.id;
@@ -255,7 +255,7 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
         }
 
         // =========================
-        // 👑 admins list
+        // admins
         // =========================
         const admins = chat.members
           .filter((m) => m.isAdmin)
@@ -265,9 +265,6 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
             avatar: m.user.avatar,
           }));
 
-        // =========================
-        // 👑 is current user admin
-        // =========================
         const isCurrentUserAdmin = isGroup
           ? !!member?.isAdmin
           : false;
@@ -287,12 +284,12 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
                   username: m.user.username,
                   email: m.user.email,
                   avatar: m.user.avatar,
-                  role: m.isAdmin ? "admin" : "member", // 👈 role
+                  role: m.isAdmin ? "admin" : "member",
                   isAdmin: m.isAdmin,
                 })),
 
-                admins, // 👈 list admins
-                isCurrentUserAdmin, // 👈 هل أنا admin
+                admins,
+                isCurrentUserAdmin,
               }
             : {
                 otherUser,
@@ -305,6 +302,21 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
         };
       })
     );
+
+    // =========================
+    // 🔥 SORT: newest first
+    // =========================
+    safeChats.sort((a, b) => {
+      const aTime = a.lastMessage?.createdAt
+        ? new Date(a.lastMessage.createdAt).getTime()
+        : 0;
+
+      const bTime = b.lastMessage?.createdAt
+        ? new Date(b.lastMessage.createdAt).getTime()
+        : 0;
+
+      return bTime - aTime;
+    });
 
     return res.json({ chats: safeChats });
   } catch (error) {
@@ -408,41 +420,11 @@ console.log("Chat members:", chat.id);
   }
 };
 
-//===============delete chat================
-export const deleteChat = async (req: AuthRequest, res: Response) => {
-  const userId = req.user?.userId;
-  const chatId = Number(req.params.chatId);
 
-  if (!userId) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  // 1️⃣ هات آخر رسالة في الشات
-  const lastMessage = await prisma.message.findFirst({
-    where: { chatId },
-    orderBy: { createdAt: "desc" },
-    select: { id: true },
-  });
-
-  // 2️⃣ اعمل update للـ ChatMember
-  await prisma.chatMember.update({
-    where: {
-      chatId_userId: {
-        chatId,
-        userId,
-      },
-    },
-    data: {
-      hidden: true,
-      lastSeenMessageId: lastMessage?.id ?? null, // 👈 الحل هنا
-    },
-  });
-
-  return res.json({ message: "Chat hidden for you" });
-};
 
 export const getChat = async (req: AuthRequest, res: Response) => {
   try {
+
     const userId = req.user?.userId;
     const chatId = Number(req.params.id);
 
@@ -1203,5 +1185,74 @@ export const updateGroupName = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
+  }
+};
+//===============delete chat================
+export const deleteChat = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.userId;
+    const chatId = Number(req.params.chatId);
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+   const members = await prisma.chatMember.findMany({
+      where: { chatId },
+      include: {
+        user: {
+          select: { username: true },
+        },
+      },
+    });
+
+  
+const chat = await prisma.chat.findFirst({
+  where: {
+    id: chatId,
+    members: {
+      some: {
+        userId: userId,
+      },
+    },
+  },
+
+  include: {
+    members: {
+      include: {
+        user: true,
+      },
+    },
+  },
+});
+
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found" });
+    }
+
+    await prisma.chat.delete({
+      where: {
+        id: chatId,
+      },
+    });
+    const io = getIO();
+
+
+
+       for (const m of members) {
+              console.log(m.userId + "chatDeleted" + "  " +chatId )
+
+      io.to(`user:${m.user.username}`).emit("chatDeleted", {
+        chatId,
+      
+      });
+    }
+
+    return res.json({ message: "Chat deleted" });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
   }
 };
