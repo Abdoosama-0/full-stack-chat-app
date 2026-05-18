@@ -33,9 +33,10 @@ const Nav = () => {
           <div className="flex w-full flex-wrap items-center justify-end gap-2 sm:w-auto sm:gap-3">
             <div className="hidden max-w-[10rem] truncate rounded-full border border-border/70 bg-muted/50 px-3 py-1.5 text-sm font-medium text-foreground sm:block sm:max-w-[14rem]">
               {userName}
+              
             </div>
 
-       
+       {/* {token} */}
             <Account />
             <Logout />
           </div>

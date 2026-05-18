@@ -8,6 +8,7 @@ import { HiOutlinePaperAirplane } from "react-icons/hi2";
 import MessageMenu from "./MessageMenu";
 import { useSelectedUserStore } from "../store/selectedUser";
 import { FaReply } from "react-icons/fa";
+import SendOptions from "./SendOptions";
 
 interface MessagesProps {
   chatId: string | null;
@@ -21,6 +22,8 @@ interface Message {
   content: string;
   sender: string;
   createdAt: string;
+        messageType?: string;
+
   replyOn?: {
     id: number;
     content: string;
@@ -38,6 +41,9 @@ const [replyToMessage, setReplyToMessage] = useState<{
   content: string;
   sender?: string;
 } | null>(null);
+
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(false);
@@ -105,6 +111,7 @@ const formatMessageTime = (dateString: string) => {
       const formatted = (data.messages || []).map((msg: any) => ({
         id: msg.id,
         content: msg.content,
+        messageType:msg.messageType,
         sender: msg.sender?.username || msg.sender,
         createdAt: msg.createdAt,
         replyOn: msg.replyOn
@@ -152,6 +159,7 @@ useEffect(() => {
       {
         id: Date.now(),
         content: data.content,
+        messageType:data.messageType,
         sender: data.from,
         createdAt: data.createdAt,
         replyOn: data.replyOn,
@@ -209,37 +217,44 @@ useEffect(() => {
 }, [socket, chatId, myUsername]);
 
   // ================= SEND MESSAGE =================
-  const sendMessage = () => {
+const sendMessage = () => {
+  if (!socket) return;
 
-    if (!socket || !newMessage.trim()) return;
-    if (!isGroup) {
-      socket.emit("send-message", {
-        type: "private",
-        toUsername: userName,
-        content: newMessage,
-        replyOnId: replyToMessage ? replyToMessage.id : undefined, // 👈 add this
-      });
-    } else {
-      socket.emit("send-message", {
-        type: "group",
-        chatId: Number(chatId),
-        content: newMessage,
-        replyOnId: replyToMessage ? replyToMessage.id : undefined, // 👈 add this
-        
-      });
-    }
+  const finalContent = imageUrl ? imageUrl : newMessage.trim();
 
-    setNewMessage("");
-    setReplyToMessage(null);
+  if (!finalContent) return;
+
+  const basePayload = {
+    content: finalContent,
+    replyOnId: replyToMessage?.id,
+    messageType: imageUrl ? "image" : "text", // 👈 add this
   };
 
-  
+  if (!isGroup) {
+    socket.emit("send-message", {
+      type: "private",
+      toUsername: userName,
+      ...basePayload,
+    });
+  } else {
+    socket.emit("send-message", {
+      type: "group",
+      chatId: Number(chatId),
+      ...basePayload,
+    });
+  }
+
+  setNewMessage("");
+  setReplyToMessage(null);
+  setImageUrl(null); // 👈 مهم جدًا بعد الإرسال
+};
   // ================= UI =================
   return (
     <div className="space-y-4 p-2">
       <div className="border-b pb-3">
         <h2 className="text-lg font-semibold">
           Conversation with {userName}
+       
         </h2>
       </div>
 
@@ -281,15 +296,21 @@ const time = formatMessageTime(msg.createdAt);
       )}
       </div>
 
-      <div
-        className={`px-3 py-2 rounded-xl text-sm max-w-[70%] ${
-          isMe
-            ? "bg-primary text-white"
-            : "bg-gray-200 text-black"
-        }`}
-      >
-        {msg.content} 
-      </div>
+<div
+  className={`px-3 py-2 rounded-xl text-sm max-w-[70%] ${
+    isMe ? "bg-primary text-white" : "bg-gray-200 text-black"
+  }`}
+>
+  {msg.messageType === "image" ? (
+    <img
+      src={msg.content}
+      alt="image"
+      className="rounded-lg max-w-[250px] object-cover"
+    />
+  ) : (
+    msg.content
+  )}
+</div>
       <div className="flex">  
 
       <button onClick={() => setReplyToMessage({ id: Number(msg.id), content: msg.content, sender: msg.sender })}><FaReply />
@@ -316,6 +337,21 @@ const time = formatMessageTime(msg.createdAt);
   );
 })}
       </div>
+      {imageUrl && (
+  <div className="mb-2 relative w-fit">
+    <img
+      src={imageUrl}
+      className="max-h-[150px] rounded-lg border"
+    />
+
+    <button
+      onClick={() => setImageUrl(null)}
+      className="absolute top-1 right-1 bg-red-500 text-white px-2 rounded"
+    >
+      X
+    </button>
+  </div>
+)}
 
       {/* ================= INPUT ================= */}
       {replyToMessage !== null && (
@@ -343,7 +379,7 @@ const time = formatMessageTime(msg.createdAt);
           className="flex-1 border rounded-lg px-3 py-2"
           placeholder="Type message..."
         />
-
+<SendOptions setImageUrl={setImageUrl}/>
         <button
           onClick={sendMessage}
 

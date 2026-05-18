@@ -72,6 +72,13 @@ model Message {
   chatId     Int
   senderId   Int
   content    String
+
+
+  image       String?
+
+  messageType String   @default("text")
+
+
   type       MessageType @default(TEXT)
   createdAt  DateTime    @default(now())
 

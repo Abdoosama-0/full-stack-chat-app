@@ -90,6 +90,7 @@ const safeMessages = messages.map((m) => ({
   senderId: m.senderId.toString(),
 
   content: m.content,
+  messageType:m.messageType,
   type: m.type,
   createdAt: m.createdAt,
 

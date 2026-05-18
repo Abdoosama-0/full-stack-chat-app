@@ -359,8 +359,8 @@ ${
 
               {/* Menu */}
               <div onClick={(e) => e.stopPropagation()}>
-                {!chat.isGroup && <ChatMenu chatId={chat.id} />}
-           
+                {/* {!chat.isGroup && <ChatMenu chatId={chat.id} />} */}
+                  <ChatMenu chatId={chat.id} />
               </div>
             </div>
           );
