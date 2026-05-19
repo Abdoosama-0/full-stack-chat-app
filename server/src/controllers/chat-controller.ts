@@ -200,6 +200,7 @@ export const getUserChats = async (req: AuthRequest, res: Response) => {
           ? {
               id: chat.messages[0].id.toString(),
               content: chat.messages[0].content,
+              messageType: chat.messages[0].messageType,
               createdAt: chat.messages[0].createdAt,
               sender: chat.messages[0].sender.username,
               senderId: chat.messages[0].senderId,

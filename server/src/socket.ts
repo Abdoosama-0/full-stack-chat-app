@@ -283,6 +283,7 @@ const chatUpdate = {
   lastMessage: {
     id: Number(message.id),
     content: message.content,
+    messageType :message.messageType,
     createdAt: message.createdAt,
     sender: fromUser.username,
   },

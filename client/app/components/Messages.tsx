@@ -20,9 +20,13 @@ interface MessagesProps {
 interface Message {
   id?: string | number;
   content: string;
+
+  messageType: "text" | "image" | "file"| "video";
+
+  fileName?: string;
+
   sender: string;
   createdAt: string;
-        messageType?: string;
 
   replyOn?: {
     id: number;
@@ -43,6 +47,9 @@ const [replyToMessage, setReplyToMessage] = useState<{
 } | null>(null);
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+const [fileUrl, setFileUrl] = useState<string | null>(null);
+const [fileName, setFileName] = useState<string | null>(null);
+const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -220,14 +227,31 @@ useEffect(() => {
 const sendMessage = () => {
   if (!socket) return;
 
-  const finalContent = imageUrl ? imageUrl : newMessage.trim();
+  let finalContent = "";
+  let messageType = "text";
+
+  if (imageUrl) {
+    finalContent = imageUrl;
+    messageType = "image";
+  } else if (fileUrl) {
+    finalContent = fileUrl;
+    messageType = "file";
+  } 
+ else if (videoUrl) {
+  finalContent = videoUrl;
+  messageType = "video";
+}
+  else {
+    finalContent = newMessage.trim();
+  }
 
   if (!finalContent) return;
 
   const basePayload = {
     content: finalContent,
+    messageType,
+    fileName, // 👈 optional
     replyOnId: replyToMessage?.id,
-    messageType: imageUrl ? "image" : "text", // 👈 add this
   };
 
   if (!isGroup) {
@@ -246,7 +270,11 @@ const sendMessage = () => {
 
   setNewMessage("");
   setReplyToMessage(null);
-  setImageUrl(null); // 👈 مهم جدًا بعد الإرسال
+
+  // setImageUrl(null);
+
+  // setFileUrl(null);
+  // setFileName(null);
 };
   // ================= UI =================
   return (
@@ -298,18 +326,44 @@ const time = formatMessageTime(msg.createdAt);
 
 <div
   className={`px-3 py-2 rounded-xl text-sm max-w-[70%] ${
-    isMe ? "bg-primary text-white" : "bg-gray-200 text-black"
+    isMe
+      ? "bg-primary text-white"
+      : "bg-gray-200 text-black"
   }`}
 >
+  
   {msg.messageType === "image" ? (
     <img
       src={msg.content}
       alt="image"
-      className="rounded-lg max-w-[250px] object-cover"
+      className="rounded-lg max-w-[250px]"
     />
-  ) : (
-    msg.content
-  )}
+  ) : msg.messageType === "file" ? (
+    <div>
+<a
+  href={msg.content}
+  target="_blank"
+  rel="noopener noreferrer"
+>
+  📎 Open PDF
+</a>
+<a
+  href={msg.content}
+  download
+>
+  📥 Download PDF
+</a>
+</div>
+) : msg.messageType === "video" ? (
+  <video
+    src={msg.content}
+    controls
+    className="rounded-lg max-w-[250px]"
+  />
+):(
+  msg.content
+)
+  }
 </div>
       <div className="flex">  
 
@@ -350,6 +404,49 @@ const time = formatMessageTime(msg.createdAt);
     >
       X
     </button>
+
+  </div>
+)}
+{videoUrl && (
+  <div className="mb-2 relative w-fit">
+    <video
+      src={videoUrl}
+      controls
+      className="max-h-[200px] rounded-lg border"
+    />
+
+    <button
+      onClick={() => setVideoUrl(null)}
+      className="absolute top-1 right-1 bg-red-500 text-white px-2 rounded"
+    >
+      X
+    </button>
+  </div>
+)}
+{fileUrl && (
+  <div className="mb-2 relative w-fit border rounded-lg p-3 bg-gray-100">
+    <div className="flex items-center gap-2">
+      <span>📎</span>
+
+      <a
+        href={fileUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline text-sm"
+      >
+        {fileName || "Open File"}
+      </a>
+    </div>
+
+    <button
+      onClick={() => {
+        setFileUrl(null);
+        setFileName(null);
+      }}
+      className="absolute top-1 right-1 bg-red-500 text-white px-2 rounded"
+    >
+      X
+    </button>
   </div>
 )}
 
@@ -379,7 +476,12 @@ const time = formatMessageTime(msg.createdAt);
           className="flex-1 border rounded-lg px-3 py-2"
           placeholder="Type message..."
         />
-<SendOptions setImageUrl={setImageUrl}/>
+<SendOptions  setImageUrl={setImageUrl}
+  setFileUrl={setFileUrl}
+  setFileName={setFileName}
+    setVideoUrl={setVideoUrl}
+    />
+
         <button
           onClick={sendMessage}
 

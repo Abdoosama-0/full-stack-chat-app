@@ -352,9 +352,17 @@ ${
                   )}
                 </p>
 
-                <p className="line-clamp-2 text-sm text-muted-foreground">
-                  {lastMessage?.content || "No messages yet"}
-                </p>
+              <p className="line-clamp-2 text-sm text-muted-foreground">
+  {lastMessage
+    ? lastMessage.messageType === "image"
+      ? "🖼 Image"
+      : lastMessage.messageType === "video"
+      ? "🎥 Video"
+      : lastMessage.messageType === "file"
+      ? "📎 File"
+      : lastMessage.content
+    : "No messages yet"}
+</p>
               </div>
 
               {/* Menu */}
