@@ -57,18 +57,32 @@ const SearchForGroup = ({ setUsernames }: SearchForGroupProps) => {
   return (
     <div className="space-y-2">
       {/* 🔍 search input */}
-      <div className="relative">
-        <HiOutlineMagnifyingGlass
-          className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
-          aria-hidden
-        />
-        <input
-          value={query}
-          onChange={(e) => searchUsers(e.target.value)}
-          placeholder="Search users..."
-          className="app-input pl-10"
-        />
-      </div>
+   
+       <div className="relative flex items-center justify-around">
+          {query && (
+    <button
+      onClick={() => {
+        searchUsers("");
+      
+      }}
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500 transition"
+    >
+      ✕
+    </button>
+  )}
+          <HiOutlineMagnifyingGlass
+            className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => searchUsers(e.target.value)}
+            placeholder="Search people..."
+            className="h-11 w-full rounded-xl border border-input bg-background pl-10 pr-3 text-sm shadow-sm outline-none ring-primary/20 transition placeholder:text-muted-foreground focus:border-primary/50 focus:ring-4"
+          />
+          
+        </div>
 
       <div className="max-h-40 space-y-1 overflow-y-auto rounded-xl border border-border/60 bg-muted/20 p-1">
         {results.map((user) => (

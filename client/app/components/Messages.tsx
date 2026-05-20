@@ -372,16 +372,16 @@ const time = formatMessageTime(msg.createdAt);
       </button>
       {!isGroup && msg.sender === myUsername && (
         
-        msg.id && <MessageMenu messageId={msg.id} messageContent={msg.content} isMe={isMe?"yes":"no"} />
+        msg.id && <MessageMenu messageId={msg.id} messageContent={msg.content} isMe={isMe?"yes":"no"}messageType={msg.messageType} />
       )}    
 
 
         {
         isGroup &&  isCurrentUserAdmin && 
-       (msg.id && <MessageMenu messageId={msg.id}  isMe={isMe?"yes":"no"} />) 
+       (msg.id && <MessageMenu messageId={msg.id}  isMe={isMe?"yes":"no"}messageType={msg.messageType} />) 
        ||
           isGroup &&   msg.sender === myUsername && 
-       (msg.id && <MessageMenu messageId={msg.id} isMe={isMe?"yes":"no"}/>) 
+       (msg.id && <MessageMenu messageId={msg.id} isMe={isMe?"yes":"no"}messageType={msg.messageType}/>) 
 
       }  
       
@@ -476,12 +476,13 @@ const time = formatMessageTime(msg.createdAt);
           className="flex-1 border rounded-lg px-3 py-2"
           placeholder="Type message..."
         />
+        <div className=" items-center pt-1.5">
 <SendOptions  setImageUrl={setImageUrl}
   setFileUrl={setFileUrl}
   setFileName={setFileName}
     setVideoUrl={setVideoUrl}
     />
-
+</div>
         <button
           onClick={sendMessage}
 

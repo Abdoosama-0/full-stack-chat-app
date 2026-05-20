@@ -48,7 +48,7 @@ const Conversation = (props: ConversationProps) => {
               <img
                 src={selectedUserAvatar}
                 alt="avatar"
-                className="h-full w-full object-cover"
+                className="h-full w-full object-cover "
               />
             ) : (
               <span className="text-sm font-semibold">

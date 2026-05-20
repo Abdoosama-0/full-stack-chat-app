@@ -36,7 +36,7 @@ const Nav = () => {
               
             </div>
 
-       {token}
+       {/* {token} */}
             <Account />
             <Logout />
           </div>

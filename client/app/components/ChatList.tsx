@@ -320,7 +320,7 @@ ${
                    <img
                       src={displayAvatar}
                       alt="avatar"
-                      className="h-full w-full object-cover"
+                      className="h-full w-full object-cover cursor-zoom-in"
                     />
                    
                   </div>

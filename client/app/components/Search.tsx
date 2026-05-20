@@ -134,7 +134,19 @@ const { token } = useUserData();
   return (
     <div className="w-full space-y-3 border-b border-border/70 pb-4">
       <h3 className="text-sm font-semibold text-foreground">Find people</h3>
-      <div className="relative">
+      <div className="relative flex items-center justify-around">
+        {query && (
+  <button
+    onClick={() => {
+      setQuery("");
+      setUsers([]);
+      setMessage("");
+    }}
+    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-red-500 transition"
+  >
+    ✕
+  </button>
+)}
         <HiOutlineMagnifyingGlass
           className="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-muted-foreground"
           aria-hidden
@@ -146,6 +158,7 @@ const { token } = useUserData();
           placeholder="Search people..."
           className="h-11 w-full rounded-xl border border-input bg-background pl-10 pr-3 text-sm shadow-sm outline-none ring-primary/20 transition placeholder:text-muted-foreground focus:border-primary/50 focus:ring-4"
         />
+        
       </div>
 
       {loading && (

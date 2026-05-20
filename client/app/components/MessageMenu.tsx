@@ -10,10 +10,12 @@ import { useUserData } from "../store/userData";
 interface Props {
   messageId: number | string;
   messageContent?: string;
+  messageType?: string;
+
   isMe?:string
 }
 
-const MessageMenu = ({ messageId, messageContent ,isMe}: Props) => {
+const MessageMenu = ({ messageId, messageContent ,isMe,messageType}: Props) => {
   const [clicked, setClicked] = React.useState(false);
   const [editMode, setEditMode] = React.useState(false);
   const [newContent, setNewContent] = React.useState(messageContent || "");
@@ -103,15 +105,18 @@ const MessageMenu = ({ messageId, messageContent ,isMe}: Props) => {
 
       {clicked && (
         <div className={`absolute ${isMe=== "yes" ? "right-0": "left-0"}  z-50 mt-2 w-40 overflow-hidden rounded-xl border border-border/70 bg-popover p-1 shadow-lg`}>
+          
+          {messageType === "text" && (
           <button
             type="button"
             onClick={handleDelete}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-destructive transition hover:bg-destructive/10"
           >
-            <HiOutlineTrash className="size-4 shrink-0" aria-hidden />
-            Delete {isMe}
-          </button>
 
+            <HiOutlineTrash className="size-4 shrink-0" aria-hidden />
+            Delete 
+          </button>
+          )}
           <button
             type="button"
             onClick={() => setEditMode(true)}

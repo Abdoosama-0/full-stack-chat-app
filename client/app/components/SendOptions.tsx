@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { CiCirclePlus } from "react-icons/ci";
+import { FaPlus } from "react-icons/fa";
 
 const SendOptions = ({
   setImageUrl,
@@ -20,7 +21,6 @@ const [messageType,setMessageType] = useState("");
 
 //=========
   const uploadFile = async (file: File) => {
-    alert('SASS')
     setLoading(true)
     const formData = new FormData();
 
@@ -101,9 +101,10 @@ const handleFileChange = async (
   <div>Loading...</div>
 ) : (
   <div className="relative">
-    <CiCirclePlus
+    <FaPlus 
+
       size={28}
-      className="cursor-pointer"
+      className="cursor-pointer hover:text-primary transition"
       onClick={() => setClicked(!clicked)}
     />
 
