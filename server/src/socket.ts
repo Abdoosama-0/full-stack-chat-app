@@ -214,8 +214,9 @@ for (const member of members) {
     },
   },
 });
-
+console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
         console.log("Message created:", message.id);
+console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
 
         // =========================
         // UPDATE LAST MESSAGE
@@ -273,7 +274,10 @@ io.to(`user:${fromUser.username}`).emit("chat-seen-updated", {
       }
     : null,
 };
+console.log("################################################")
+
 console.log(payload)
+console.log("################################################")
 
         io.to(`user:${receiver.username}`).emit("new-message", payload);
         io.to(`user:${fromUser.username}`).emit("new-message", payload);
@@ -398,6 +402,7 @@ if (type === "group") {
   };
 
   const messagePayload = {
+    isGroup: chat.isGroup,
   chatId: Number(chat.id || chatId),
   id: Number(message.id),
   from: fromUser.username,
@@ -415,7 +420,7 @@ messageType: message.messageType,
     : null,
 };
 
-  // =========================
+  // ========================= new message
   // EMIT TO ALL MEMBERS
   // =========================
   for (const member of chat.members) {

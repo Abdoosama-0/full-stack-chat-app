@@ -54,7 +54,6 @@ const Login = () => {
       setAvatar(data.avatar);
 
       //================logedin 
-alert("Login successful! Welcome, " + data.avatar);
 
       //=================
        router.push("/");

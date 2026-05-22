@@ -107,7 +107,16 @@ const MessageMenu = ({ messageId, messageContent ,isMe,messageType}: Props) => {
         <div className={`absolute ${isMe=== "yes" ? "right-0": "left-0"}  z-50 mt-2 w-40 overflow-hidden rounded-xl border border-border/70 bg-popover p-1 shadow-lg`}>
           
           {messageType === "text" && (
-          <button
+               <button
+            type="button"
+            onClick={() => setEditMode(true)}
+            className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-accent"
+          >
+            <HiOutlinePencil className="size-4 shrink-0" aria-hidden />
+            Edit
+          </button>
+          )}
+           <button
             type="button"
             onClick={handleDelete}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-destructive transition hover:bg-destructive/10"
@@ -116,15 +125,7 @@ const MessageMenu = ({ messageId, messageContent ,isMe,messageType}: Props) => {
             <HiOutlineTrash className="size-4 shrink-0" aria-hidden />
             Delete 
           </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setEditMode(true)}
-            className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-accent"
-          >
-            <HiOutlinePencil className="size-4 shrink-0" aria-hidden />
-            Edit
-          </button>
+    
           {editMode && (
 
             <div onClick={()=>setEditMode(false)} className="app-modal-overlay">

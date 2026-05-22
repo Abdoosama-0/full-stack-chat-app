@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/dist/client/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 import {
@@ -161,6 +162,10 @@ const Register = () => {
           <HiOutlineUserPlus className="size-4" aria-hidden />
           {loading ? "Registering..." : "Register"}
         </button>
+        <div className="text-center text-sm text-muted-foreground">
+          
+          <Link href="/auth/login" className="font-medium text-primary hover:underline cursor-pointer mx-auto">have an account</Link>
+        </div>
       </form>
     </div>
   );

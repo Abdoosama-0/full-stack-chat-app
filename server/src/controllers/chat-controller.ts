@@ -880,7 +880,7 @@ export const deleteMessage = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.userId;
     const messageId = Number(req.params.messageId);
-
+    
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
@@ -1198,37 +1198,44 @@ export const deleteChat = async (req: AuthRequest, res: Response) => {
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized" });
     }
-   const members = await prisma.chatMember.findMany({
-      where: { chatId },
+
+    const chat = await prisma.chat.findFirst({
+      where: {
+        id: chatId,
+        members: {
+          some: {
+            userId,
+          },
+        },
+      },
       include: {
-        user: {
-          select: { username: true },
+        members: {
+          include: {
+            user: {
+              select: {
+                username: true,
+              },
+            },
+          },
         },
       },
     });
 
-  
-const chat = await prisma.chat.findFirst({
-  where: {
-    id: chatId,
-    members: {
-      some: {
-        userId: userId,
-      },
-    },
-  },
-
-  include: {
-    members: {
-      include: {
-        user: true,
-      },
-    },
-  },
-});
-
     if (!chat) {
       return res.status(404).json({ message: "Chat not found" });
+    }
+
+    // ✅ لو جروب لازم يكون Admin
+    if (chat.isGroup) {
+      const currentMember = chat.members.find(
+        (m) => m.userId === userId
+      );
+
+      if (!currentMember?.isAdmin) {
+        return res.status(403).json({
+          message: "Only group admin can delete this group",
+        });
+      }
     }
 
     await prisma.chat.delete({
@@ -1236,16 +1243,12 @@ const chat = await prisma.chat.findFirst({
         id: chatId,
       },
     });
+
     const io = getIO();
 
-
-
-       for (const m of members) {
-              console.log(m.userId + "chatDeleted" + "  " +chatId )
-
+    for (const m of chat.members) {
       io.to(`user:${m.user.username}`).emit("chatDeleted", {
         chatId,
-      
       });
     }
 

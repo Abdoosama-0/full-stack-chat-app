@@ -158,13 +158,20 @@ useEffect(() => {
   // ================= new Message =================
 useEffect(() => {
   if (!socket || !chatId) return;
+  
 
   const handleNewMessage = (data: any) => {
     // 1️⃣ ضيف الرسالة
+    if (data.isGroup) {
+ const isSameChat1 = Number(data.chatId) === Number(chatId);
+// Cannot redeclare block-scoped variable 'isSameChat'.
+
+if (!isSameChat1) return;}
     setMessages((prev) => [
       ...prev,
       {
-        id: Date.now(),
+        id: data.id,
+        chatId: data.chatId,// عاوز الرسالة تتضاف بس فى ال  chatid  ده 
         content: data.content,
         messageType:data.messageType,
         sender: data.from,
@@ -226,7 +233,6 @@ useEffect(() => {
   // ================= SEND MESSAGE =================
 const sendMessage = () => {
   if (!socket) return;
-
   let finalContent = "";
   let messageType = "text";
 
@@ -271,10 +277,10 @@ const sendMessage = () => {
   setNewMessage("");
   setReplyToMessage(null);
 
-  // setImageUrl(null);
+  setImageUrl(null);
 
-  // setFileUrl(null);
-  // setFileName(null);
+  setFileUrl(null);
+  setFileName(null);
 };
   // ================= UI =================
   return (
@@ -371,8 +377,10 @@ const time = formatMessageTime(msg.createdAt);
       
       </button>
       {!isGroup && msg.sender === myUsername && (
-        
-        msg.id && <MessageMenu messageId={msg.id} messageContent={msg.content} isMe={isMe?"yes":"no"}messageType={msg.messageType} />
+        <div>
+    
+       { msg.id && <MessageMenu messageId={msg.id} messageContent={msg.content} isMe={isMe?"yes":"no"}messageType={msg.messageType} />}
+      </div>
       )}    
 
 

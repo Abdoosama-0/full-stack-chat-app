@@ -43,8 +43,7 @@ const [messageType,setMessageType] = useState("");
     }
 
     const data = await res.json();
-alert(JSON.stringify(data))
-alert(data.secure_url)
+
     setLoading(false)
 
 
@@ -97,9 +96,7 @@ const handleFileChange = async (
   setFileName(file.name);
 };
 
-  return loading ? (
-  <div>Loading...</div>
-) : (
+  return (
   <div className="relative">
     <FaPlus 
 

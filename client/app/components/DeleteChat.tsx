@@ -18,8 +18,8 @@ const DeleteChat = ({ chatId }: { chatId: number }) => {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || "Failed to delete chat");
-      }
+        alert("Failed to delete chat: " + (data.message || "Unknown error"));
+        return;}
 
       alert("Chat deleted:" + data.message);
 
