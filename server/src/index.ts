@@ -18,9 +18,11 @@ app.use(express.json());
 import cors from "cors";
 
 app.use(cors({
-  origin: "http://localhost:3000",
-  credentials: true
-}));
+     origin: (origin, callback) => {
+    callback(null, true); // السماح بأي origin
+  },
+    credentials: true,
+  }));
 
 
 // Route example
