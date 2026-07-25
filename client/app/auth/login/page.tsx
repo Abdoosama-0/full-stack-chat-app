@@ -27,6 +27,8 @@ const Login = () => {
     try {
       setLoading(true);
       setMessage("");
+      alert("processing login...");
+      alert(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`);
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
         method: "POST",
