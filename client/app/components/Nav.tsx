@@ -5,6 +5,7 @@ import { HiOutlineChatBubbleLeftRight } from "react-icons/hi2";
 import Account from './Account';
 import { FaHome } from 'react-icons/fa';
 import Link from 'next/link';
+import { FaRocketchat } from 'react-icons/fa6';
 
 const Nav = () => {
   
@@ -22,7 +23,9 @@ const Nav = () => {
              
          
             <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-md shadow-primary/25 sm:size-10">
-            <HiOutlineChatBubbleLeftRight className="size-5" aria-hidden />
+            {/* <HiOutlineChatBubbleLeftRight className="size-5" aria-hidden /> */}
+            <FaRocketchat className="size-5" aria-hidden />
+
           </span>
             <h1 className="truncate text-lg font-semibold tracking-tight text-foreground sm:text-xl">Chat App</h1>
             </Link>
