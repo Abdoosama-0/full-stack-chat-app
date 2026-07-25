@@ -7,7 +7,7 @@ const DeleteChat = ({ chatId }: { chatId: number }) => {
     
   const handleDeleteChat = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/chat/${chatId}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chat/${chatId}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

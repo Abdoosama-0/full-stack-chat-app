@@ -44,7 +44,7 @@ const Register = () => {
         formData.append("avatar", avatar);
       }
 
-      const res = await fetch("http://localhost:5000/api/auth/register", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
         method: "POST",
         body: formData,
       });

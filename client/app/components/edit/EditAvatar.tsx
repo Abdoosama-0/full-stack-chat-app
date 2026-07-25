@@ -26,7 +26,7 @@ const EditAvatar = () => {
       formData.append("avatar", file);
 
       const res = await fetch(
-        "http://localhost:5000/api/user/update-avatar",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/user/update-avatar`,
         {
           method: "POST",
           headers: {

@@ -35,7 +35,7 @@ const Account = () => {
       try {
         setLoading(true);
 
-        const res = await fetch("http://localhost:5000/api/user/userData", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/user/userData`, {
           method: "GET",
           headers: {
             "Content-Type": "application/json",

@@ -22,7 +22,7 @@ const DeleteAccount = () => {
       setLoading(true);
 
       const res = await fetch(
-        "http://localhost:5000/api/user/delete-account",
+        `${process.env.NEXT_PUBLIC_API_URL}/api/user/delete-account`,
         {
           method: "DELETE",
           headers: {

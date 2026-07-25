@@ -24,7 +24,7 @@ const EditGroupName = ({ chatId, chatName }: Props) => {
   
   try {
     const res = await fetch(
-      `http://localhost:5000/api/chat/${chatId}/name`,
+     `${process.env.NEXT_PUBLIC_API_URL}/api/chat/${chatId}/name`,
       {
         method: "PUT",
         headers: {

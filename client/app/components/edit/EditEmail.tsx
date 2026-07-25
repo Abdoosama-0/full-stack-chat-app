@@ -19,7 +19,7 @@ const EditEmail = () => {
 
     try {
       const res = await fetch(
-        "http://localhost:5000/api/user/email/updateEmail",
+       `${process.env.NEXT_PUBLIC_API_URL}/api/user/email/updateEmail`,
         {
           method: "POST",
           headers: {

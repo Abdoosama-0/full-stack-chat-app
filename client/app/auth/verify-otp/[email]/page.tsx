@@ -28,7 +28,7 @@ const VerifyOTP = ({params,}: {params: Promise<{ email: string }>;}) => {
       setLoading(true);
       setMessage("");
 
-      const res = await fetch("http://localhost:5000/api/auth/verifyOtp", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/verifyOtp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

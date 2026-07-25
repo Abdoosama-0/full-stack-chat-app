@@ -17,7 +17,7 @@ const EditUserName = () => {
 
     try {
       const res = await fetch(
-        "http://localhost:5000/api/user/editUserName",
+       `${process.env.NEXT_PUBLIC_API_URL}/api/user/editUserName`,
         {
           method: "PUT",
           headers: {

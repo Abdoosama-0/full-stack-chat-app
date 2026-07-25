@@ -42,7 +42,7 @@ const { token } = useUserData();
   
 
         const res = await fetch(
-          `http://localhost:5000/api/user/search?q=${query}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/user/search?q=${query}`,
           {
             method: "GET",
             headers: {
@@ -90,7 +90,7 @@ const { token } = useUserData();
         setMessage("");
 
         const res = await fetch(
-          `http://localhost:5000/api/chat/getChatData/${user?.id}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/chat/getChatData/${user?.id}`,
           {
             method: "GET",
             headers: {

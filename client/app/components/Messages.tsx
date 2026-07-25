@@ -97,7 +97,7 @@ const formatMessageTime = (dateString: string) => {
       }
 
       const res = await fetch(
-        `http://localhost:5000/api/chat/${chatId}/messages`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/chat/${chatId}/messages`,
         {
           headers: {
             Authorization: "Bearer " + token,

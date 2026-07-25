@@ -17,7 +17,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
         if (!token) return;
 
 
-    const newSocket = io("http://localhost:5000", {
+    const newSocket = io(`${process.env.NEXT_PUBLIC_API_URL}`, {
        query: { token },
       //  withCredentials: true,
     });

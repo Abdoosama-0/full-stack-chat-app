@@ -74,7 +74,7 @@ const { selectedChatId } = useChatStore();
         setError("");
 
         const res = await fetch(
-          "http://localhost:5000/api/chat/getUserChats",
+          `${process.env.NEXT_PUBLIC_API_URL}/api/chat/getUserChats`,
           {
             method: "GET",
             headers: {

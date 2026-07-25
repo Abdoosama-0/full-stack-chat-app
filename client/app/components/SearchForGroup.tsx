@@ -22,7 +22,7 @@ const SearchForGroup = ({ setUsernames }: SearchForGroupProps) => {
 
     try {
       const res = await fetch(
-        `http://localhost:5000/api/user/search?q=${value}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/user/search?q=${value}`,
         {
           method: "GET",
           headers: {

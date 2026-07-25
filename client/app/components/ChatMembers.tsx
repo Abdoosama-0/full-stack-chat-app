@@ -29,7 +29,7 @@ const ChatMembers = ({ chatId }: Props) => {
   const fetchMembers = async () => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/chat/group/${chatId}/members`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/chat/group/${chatId}/members`,
         {
           method: "GET",
           headers: {

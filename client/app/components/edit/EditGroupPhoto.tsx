@@ -42,7 +42,7 @@ const EditGroupPhoto = ({ chatId }: Props) => {
       formData.append("image", file);
 
       const res = await fetch(
-        `http://localhost:5000/api/chat/${chatId}/photo`,
+       `${process.env.NEXT_PUBLIC_API_URL}/api/chat/${chatId}/photo`,
         {
           method: "PUT",
            headers: {

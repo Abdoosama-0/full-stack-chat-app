@@ -48,7 +48,7 @@ const CreateGroup = () => {
         formData.append("chatPhoto", groupImage);
       }
 
-      const res = await fetch("http://localhost:5000/api/chat/createGroup", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/chat/createGroup`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

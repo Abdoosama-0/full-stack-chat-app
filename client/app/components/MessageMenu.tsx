@@ -25,7 +25,7 @@ const MessageMenu = ({ messageId, messageContent ,isMe,messageType}: Props) => {
   const handleDelete = async () => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/chat/message/${messageId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/chat/message/${messageId}`,
         {
           method: "DELETE",
           headers: {
@@ -59,7 +59,7 @@ const MessageMenu = ({ messageId, messageContent ,isMe,messageType}: Props) => {
 
   try {
     const res = await fetch(
-      `http://localhost:5000/api/chat/message/${messageId}`,
+     `${process.env.NEXT_PUBLIC_API_URL}/api/chat/message/${messageId}`,
       {
         method: "PUT",
         headers: {
